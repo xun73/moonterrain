@@ -1,0 +1,9 @@
+# Old revision snapshots kept locally for diffing — never publish these.
+moonterrain[0-9].html
+moonterrain_offline.html
+
+# Optional local Stellarium textures (not required; the app falls back to network/procedural).
+textures/
+
+# Local CDN snapshots used only by the offline variant (not the published Pages version).
+libs/
