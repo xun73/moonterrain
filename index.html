@@ -137,7 +137,17 @@
            All of them keep their title bar visible and collapse only the body, so a
            collapsed panel still shows which panel it is (月球觀測儀 / 照片疊圖 / ...). */
         #main-panel { transition: padding .28s ease, margin .28s ease; overflow: hidden; }
-        #main-panel.collapsed { padding-bottom: 0; margin-bottom: 0; }
+        /* Collapsed panels share one uniform bar height: all four zero their bottom
+           padding/margin and drop the header's trailing margin, so 月球觀測儀 /
+           照片疊圖 / 顯示設定 / 查詢地形特徵 collapse to the same bar regardless
+           of their header contents. */
+        #main-panel.collapsed, #overlay-panel.collapsed,
+        #settings-panel.collapsed, #search-panel.collapsed {
+            padding-bottom: 0; margin-bottom: 0;
+        }
+        #overlay-panel.collapsed > .flex:first-child,
+        #settings-panel.collapsed > .flex:first-child,
+        #search-panel.collapsed > .flex:first-child { margin-bottom: 0; }
         #main-body, #overlay-body, #settings-body, #search-body {
             transition: max-height .28s ease, opacity .22s ease;
             max-height: 1400px; overflow: hidden; opacity: 1;
@@ -199,30 +209,37 @@
         #left-panels > * { direction: ltr; pointer-events: auto; flex-shrink: 0; }
         @media (max-width: 640px) {
             #left-panels { max-height: calc(100vh - 16px); }
-            /* Phones / narrow windows: the panels open at full width, so compact the
-               info fields and rows (「各欄位先縮小」) on arrival so one line fits for
-               every field without wrapping or clipping. `#ui-container`-scoped rules
-               out-spec the Tailwind utility classes regardless of style-injection order. */
-            .info-item { height: 22px; padding: 0 6px; }
-            .info-item .k { font-size: 10px; }
-            .info-item .v { font-size: 11px; }
-            #ui-container .text-\[13px\] { font-size: 12px; line-height: 18px; }
-            #ui-container .text-\[12px\] { font-size: 11px; line-height: 16px; }
-            /* All four panels share one compact field height: the 顯示設定 /
-               查詢地形特徵 rows (buttons, inputs, selects) become the same 22px as
-               the compact rows in 月球觀測儀 / 照片疊圖. Range sliders keep their own
+/* Phones / narrow windows: fields are sized UP for readability (bigger
+               fonts + a roomier 26px row) yet stay uniform and single-line across
+               all four panels. `#ui-container`-scoped rules out-spec the Tailwind
+               utility classes regardless of style-injection order. */
+            .info-item { height: 26px; padding: 0 8px; }
+            .info-item .k { font-size: 11px; }
+            .info-item .v { font-size: 12px; }
+            /* Keep the Tailwind utility text at its desktop size (no shrink on
+               phones) and give it a taller line box so labels stay legible. */
+            #ui-container .text-\[13px\] { font-size: 13px; line-height: 20px; }
+            #ui-container .text-\[12px\] { font-size: 12px; line-height: 18px; }
+            #ui-container .text-\[11px\] { font-size: 12px; }
+            #ui-container .text-\[10px\] { font-size: 11px; }
+            /* All four panels share one uniform field height: the 顯示設定 /
+               查詢地形特徵 rows (buttons, inputs, selects) become the same 26px as
+               the info rows in 月球觀測儀 / 照片疊圖. Range sliders keep their own
                touch-friendly height; the 20px checkbox toggles simply stay centred. */
             #ui-container button,
             #ui-container input:not([type="range"]):not([type="checkbox"]):not([type="file"]),
-            #ui-container select { height: 22px; padding-top: 0; padding-bottom: 0; font-size: 11px; }
-            #settings-body .flex, #search-body .flex { min-height: 22px; }
+            #ui-container select { height: 26px; padding-top: 0; padding-bottom: 0; font-size: 12px; }
+            #settings-body .flex, #search-body .flex { min-height: 26px; }
             #ui-container input[type="date"],
-            #ui-container input[type="time"] { font-size: 11px; padding: 0 6px; }
+            #ui-container input[type="time"] { font-size: 12px; padding: 0 8px; }
         }
         @media (max-width: 400px) {
-            .info-item .k { font-size: 9.5px; }
-            .info-item .v { font-size: 10.5px; }
-            #ui-container .text-\[13px\] { font-size: 11.5px; }
+            /* Very narrow phones: one step down, but still larger than the old sizes. */
+            .info-item .k { font-size: 10px; }
+            .info-item .v { font-size: 11px; }
+            #ui-container .text-\[13px\] { font-size: 12px; }
+            #ui-container .text-\[12px\] { font-size: 11.5px; }
+            #ui-container .text-\[11px\] { font-size: 11px; }
         }
 
         /* Photo overlay settings: flows under the main panel (collapse rules shared
@@ -12731,6 +12748,7 @@ const cv = makeProceduralElevationCanvas();
             state.panActive = false;
             state.panRemain = null;
             markDirty();
+            applyResponsiveCollapse();
         }
         zoomSlider.addEventListener('input', (e) => { applyZoomSlider(); });
         // keep the slider in sync when the wheel / pinch zoom changes the camera.zoom
@@ -12741,6 +12759,7 @@ const cv = makeProceduralElevationCanvas();
                 lastZoomUI = camera.zoom;
                 zoomSlider.value = camera.zoom;
                 zoomValueEl.textContent = camera.zoom.toFixed(2);
+                applyResponsiveCollapse();
             }
         }
         toggleTeleFlipH.addEventListener('change', (e) => { state.teleFlipH = e.target.checked; applyTelescope(); });
