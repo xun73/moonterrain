@@ -111,6 +111,9 @@
         #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; transition: opacity .5s; }
         .spinner { width: 50px; height: 50px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; margin-bottom: 20px; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .load-progress { width: min(280px, 70vw); height: 8px; border-radius: 9999px; background: rgba(255,255,255,.15); overflow: hidden; margin-top: 14px; }
+        #load-bar { height: 100%; width: 0%; background: linear-gradient(90deg, #38bdf8, #a78bfa); border-radius: 9999px; transition: width .35s ease; }
+        .load-status { margin-top: 10px; font-size: 12px; color: #cbd5e1; letter-spacing: .02em; }
 
         /* Parameter read-outs: one field per row, so each label keeps its natural width
            and the value always gets the rest of the panel. In the old 2-column grid a cell
@@ -271,6 +274,8 @@
     <div id="loading">
         <div class="spinner"></div>
         <h2 class="text-xl font-bold tracking-wider">正在載入月球資料...</h2>
+        <div id="load-progress" class="load-progress"><div id="load-bar"></div></div>
+        <p id="load-status" class="load-status">連接伺服器…</p>
     </div>
 
     <div id="starfield"></div>
@@ -10901,9 +10906,47 @@
         }
 
         // ---- Loading pipeline (each slot resolves exactly once, then overlay hides) ----
+        const loadBar = document.getElementById('load-bar');
+        const loadStatus = document.getElementById('load-status');
         const resolvedSlots = { color: false, elev: false };
+        let slotProgress = { color: 0, elev: 0 };
+        function onSlotProgress(slot, e) {
+            if (!e || !e.total || !e.loaded) return;
+            slotProgress[slot] = Math.min(0.9, e.loaded / e.total);
+            updateLoadingUI();
+        }
+        function updateLoadingUI() {
+            const pct = Math.round((slotProgress.color * 0.5 + slotProgress.elev * 0.5) * 100);
+            if (loadBar) loadBar.style.width = pct + '%';
+            if (loadStatus) {
+                const parts = [];
+                if (!resolvedSlots.color) parts.push(state.lang === 'tw' ? '月面影像' : 'surface imagery');
+                if (!resolvedSlots.elev) parts.push(state.lang === 'tw' ? '地形資料' : 'terrain data');
+                const lead = parts.length
+                    ? (parts.length === 2
+                        ? (state.lang === 'tw' ? '下載中 月面影像與地形資料⋯' : 'Downloading surface imagery & terrain data…')
+                        : (state.lang === 'tw' ? '下載中 ' + parts[0] + '⋯' : 'Downloading ' + parts[0] + '…'))
+                    : (state.lang === 'tw' ? '完成' : 'Done');
+                loadStatus.textContent = lead + ' ' + pct + '%';
+            }
+        }
+        // Slow trickle so the bar is visibly alive while big textures stream in, even
+        // before Content-Length arrives (onProgress.total can be 0 for some servers).
+        function creepProgress() {
+            let pending = 0;
+            for (const slot of ['color', 'elev']) {
+                if (resolvedSlots[slot]) continue;
+                pending++;
+                if (slotProgress[slot] < 0.85) slotProgress[slot] = Math.min(0.85, slotProgress[slot] + 0.03 + Math.random() * 0.02);
+            }
+            updateLoadingUI();
+            if (pending === 0) clearInterval(loadTimer);
+        }
+        const loadTimer = setInterval(creepProgress, 400);
         function slotDone(slot) {
             resolvedSlots[slot] = true;
+            slotProgress[slot] = 1;
+            updateLoadingUI();
             if (resolvedSlots.color && resolvedSlots.elev) {
                 loadingOverlay.style.opacity = '0';
                 setTimeout(() => loadingOverlay.style.display = 'none', 500);
@@ -10970,13 +11013,13 @@
                 }
                 applyBest();
                 if (!colorDone) { console.warn('[moon] hiRes decode below target, falling back'); applyBest(); }
-            }, undefined, function () {
+            }, (e) => onSlotProgress('color', e), function () {
                 console.warn('[moon] hiRes texture failed');
                 applyBest();
             });
             textureLoader.load(colorMapUrl, function (tex) {
                 twoTex = tex; applyBest();
-            }, undefined, function () {
+            }, (e) => onSlotProgress('color', e), function () {
                 console.warn('[moon] NASA 2K standby failed');
                 applyBest();
             });
@@ -11023,7 +11066,7 @@ const cv = makeProceduralElevationCanvas();
                 applyTerrain(tex);
             }, undefined, function () {
                 // fallback chain: resampled remote 8-bit LOLA -> procedural canvas
-                textureLoader.load(displacementMapUrl, applyTerrain, undefined, function () { applyProc(); });
+                textureLoader.load(displacementMapUrl, applyTerrain, (e) => onSlotProgress('elev', e), function () { applyProc(); });
             });
         }
         loadColorTexture();
@@ -12456,6 +12499,7 @@ const cv = makeProceduralElevationCanvas();
         // Elements whose entire text is a single phrase.
         const I18N_TEXT = {
             '正在載入月球資料...': 'Loading lunar data...',
+            '連接伺服器…': 'Connecting to servers…',
             '月球觀測儀': 'Lunar Observer',
             '照片疊圖': 'Photo overlay',
             '今天': 'Today',
@@ -12999,6 +13043,24 @@ const cv = makeProceduralElevationCanvas();
         btnCollapseSide.addEventListener('click', () => { setCollapsed(settingsPanel, !settingsPanel.classList.contains('collapsed')); });
         btnCollapseSearch.addEventListener('click', () => { setCollapsed(searchPanel, !searchPanel.classList.contains('collapsed')); });
         btnCollapseOverlay.addEventListener('click', () => { setCollapsed(overlayPanel, !overlayPanel.classList.contains('collapsed')); });
+
+        // 手機 / 窄視窗（<=640px）：四個面板會佔滿整個畫面蓋住月球，
+        // 載入時自動全部收起成標題列，讓月面第一時間可見；點標題的
+        // 收起/展開鈕即可再展開個別面板。只在進入/離開該寬度時套用一次，
+        // 之後保持使用者手動的展開狀態，不會在每次 resize 時反覆收放。
+        const COMPACT_W = 640;
+        let prevCompact = null;
+        function applyResponsiveCollapse() {
+            const compact = window.innerWidth <= COMPACT_W;
+            if (prevCompact === compact) return;
+            prevCompact = compact;
+            setCollapsed(mainPanel, compact);
+            setCollapsed(overlayPanel, compact);
+            setCollapsed(settingsPanel, compact);
+            setCollapsed(searchPanel, compact);
+        }
+        applyResponsiveCollapse();
+        window.addEventListener('resize', applyResponsiveCollapse, false);
 
         // Click empty canvas to clear selection (ignore drag gestures)
         let canvasDownPos = null;
