@@ -173,6 +173,40 @@
         /* Credit line: sits at the very bottom of the photo-overlay panel. */
         #credit-line { line-height: 1.5; }
 
+        /* 資料來源版權彈窗：固定遮罩 + 置中卡片，預設隱藏（.open 才顯示）。 */
+        #btn-credits {
+            margin-left: 6px; padding: 1px 8px; font-size: 10px; color: #93c5fd;
+            background: #1e293b; border: 1px solid #334155; border-radius: 9999px;
+            cursor: pointer; vertical-align: baseline; transition: background .2s, color .2s;
+        }
+        #btn-credits:hover { background: #334155; color: #e0f2fe; }
+        .credit-overlay {
+            position: fixed; inset: 0; z-index: 90; display: none;
+            align-items: center; justify-content: center;
+            background: rgba(5, 5, 16, 0.72); backdrop-filter: blur(4px);
+        }
+        .credit-overlay.open { display: flex; }
+        .credit-card {
+            width: min(560px, calc(100vw - 32px)); max-height: min(70vh, 540px);
+            background: #0b1020; border: 1px solid #334155; border-radius: 12px;
+            color: #e2e8f0; display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+        }
+        .credit-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid #1e293b; }
+        .credit-head h3 { margin: 0; font-size: 13px; font-weight: 600; color: #f1f5f9; }
+        #btn-close-credits {
+            border: 0; background: transparent; color: #94a3b8; font-size: 14px;
+            cursor: pointer; padding: 2px 6px; border-radius: 6px;
+        }
+        #btn-close-credits:hover { color: #f1f5f9; background: #1e293b; }
+        .credit-body { flex: 1; overflow-y: auto; padding: 12px 16px 16px; font-size: 12px; line-height: 1.75; }
+        .credit-body h4 { margin: 12px 0 4px; font-size: 12px; color: #7dd3fc; }
+        .credit-body h4:first-child { margin-top: 0; }
+        .credit-body p { margin: 2px 0; }
+        .credit-body a { color: #38bdf8; text-decoration: none; word-break: break-all; }
+        .credit-body a:hover { text-decoration: underline; }
+        .credit-note { color: #94a3b8; font-size: 11px; border-top: 1px dashed #1e293b; padding-top: 8px; margin-top: 10px; }
+
         /* ---------- Scrollable panel columns ----------
            These columns carry their own scrollbar, so the element itself MUST be
            pointer-events: auto - a `pointer-events: none` scroller (inherited from
@@ -425,7 +459,7 @@
                     </div>
                     <button id="btn-download" class="w-full mt-1 text-[11px] px-2 py-1.5 rounded-md bg-sky-700 hover:bg-sky-600 text-white transition"><i class="fa-solid fa-download mr-1"></i>下載目前畫面</button>
 
-                    <p id="credit-line" class="border-t border-slate-700 pt-2 mt-1 text-[10px] text-white leading-relaxed text-center"><i class="fa-solid fa-user-pen mr-1"></i><span id="credit-text">臺中市立惠文高中地球科學教師吳秉勳製作</span></p>
+                    <p id="credit-line" class="border-t border-slate-700 pt-2 mt-1 text-[10px] text-white leading-relaxed text-center"><i class="fa-solid fa-user-pen mr-1"></i><span id="credit-text">臺中市立惠文高中地球科學教師吳秉勳製作</span><button id="btn-credits" title="資料來源版權"><i class="fa-solid fa-circle-info mr-0.5"></i>資料來源</button></p>
                 </div>
             </div>
             </div>
@@ -449,11 +483,11 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-between gap-3" title="效能模式：低效能使用輕量正面月球（無立體地形、無照片疊圖、無自由視角）；高效能保留完整 3D 功能。切換後重新整理立即生效。">
+                    <div class="flex items-center justify-between gap-3" title="效能模式：精簡版使用輕量正面月球（無立體地形、無照片疊圖、無自由視角）；完整版保留完整 3D 功能。切換後重新整理立即生效。">
                         <span class="text-[13px] text-gray-300 whitespace-nowrap">效能模式 <span id="mode-auto-note" class="text-[11px] text-emerald-400"></span></span>
                         <select id="perf-mode" class="bg-gray-800 border border-gray-600 rounded px-1.5 py-1 text-[11px] text-white focus:outline-none focus:border-blue-500">
-                            <option value="low">低效能</option>
-                            <option value="high">高效能</option>
+                            <option value="low">精簡版</option>
+                            <option value="high">完整版</option>
                         </select>
                     </div>
 
@@ -640,6 +674,41 @@
             <div class="flex justify-between"><span class="text-gray-500">座標</span><span id="dc-coord" class="text-gray-200 font-mono"></span></div>
         </div>
         <p id="dc-intro" class="text-[12px] leading-relaxed text-gray-300 mt-2 border-t border-slate-700 pt-2"></p>
+    </div>
+
+    <div id="credits-modal" class="credit-overlay" role="dialog" aria-modal="true">
+        <div class="credit-card">
+            <div class="credit-head">
+                <h3><i class="fa-solid fa-book-open mr-1"></i>資料來源與版權</h3>
+                <button id="btn-close-credits" title="關閉"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="credit-body">
+                <h4>月面影像與地形</h4>
+                <p>NASA LROC WAC 月面彩色馬賽克（SVS #4720）· 公眾領域 <a href="https://svs.gsfc.nasa.gov/4720" target="_blank" rel="noopener">svs.gsfc.nasa.gov/4720</a></p>
+                <p>NASA LOLA 數值地形模型（SVS #4720）· 公眾領域 <a href="https://svs.gsfc.nasa.gov/4720" target="_blank" rel="noopener">svs.gsfc.nasa.gov/4720</a></p>
+                <p>Solar System Scope 8K 月球紋理（LROC WAC 馬賽克）· CC BY 4.0 <a href="https://www.solarsystemscope.com/textures" target="_blank" rel="noopener">solarsystemscope.com/textures</a></p>
+                <p>Three.js 範例備援紋理（moon_1024.jpg）· MIT <a href="https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/moon_1024.jpg" target="_blank" rel="noopener">three.js / moon_1024.jpg</a></p>
+                <p>本機 Stellarium 紋理（textures\ 資料夾）· 源自 NASA LROC／LOLA 公眾領域影像 <a href="https://stellarium.org" target="_blank" rel="noopener">stellarium.org</a></p>
+
+                <h4>影像代理服務</h4>
+                <p>images.weserv.nl 免費圖片縮放／快取服務（BSD 3-Clause） <a href="https://images.weserv.nl" target="_blank" rel="noopener">images.weserv.nl</a></p>
+
+                <h4>程式庫與字型</h4>
+                <p>Three.js（3D 渲染）· MIT <a href="https://threejs.org" target="_blank" rel="noopener">threejs.org</a></p>
+                <p>OrbitControls（Three.js 官方控制器）· MIT</p>
+                <p>Tailwind CSS（樣式）· MIT <a href="https://tailwindcss.com" target="_blank" rel="noopener">tailwindcss.com</a></p>
+                <p>Font Awesome Free 6.4（圖示）· 圖示 CC BY 4.0／字型 SIL OFL 1.1／程式碼 MIT <a href="https://fontawesome.com" target="_blank" rel="noopener">fontawesome.com</a></p>
+                <p>Inter 字型（Google Fonts）· SIL OFL 1.1 <a href="https://fonts.google.com/specimen/Inter" target="_blank" rel="noopener">fonts.google.com</a></p>
+
+                <h4>天文資料</h4>
+                <p>月相與天平動公式：J. Meeus《Astronomical Algorithms》</p>
+                <p>IAU 2003 月球極點模型（Seidelmann, 2003）</p>
+                <p>天平動多項式參照 Stellarium 26.2 實作</p>
+                <p>地形特徵名稱與座標：IAU 行星命名總表（USGS Astrogeology）· 公眾領域 <a href="https://planetarynames.wr.usgs.gov" target="_blank" rel="noopener">planetarynames.wr.usgs.gov</a></p>
+
+                <p class="credit-note">NASA 素材依 NASA 媒體使用準則以事實陳述方式使用，不構成 NASA 背書。本網頁不收集或上傳任何個人資料。</p>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -9847,14 +9916,15 @@
         // 2. Application State
         // =====================================================================
         // 低效能模式自動偵測：記憶體/核心數偏低、或手機資源有限者預設進入
-        // 低效能（輕量正面月球）。可在 顯示設定 → 效能模式 手動切換並存檔。
+        // 低效能（輕量正面月球）。手機門檻較高（<8GB 或 <8 核心即判精簡），
+        // 因多數手機較適合作業於低效能。可在 顯示設定 → 效能模式 手動切換並存檔。
         const LOW_PERF_AUTO = (function () {
             try {
                 const mem = navigator.deviceMemory || 4;
                 const cores = navigator.hardwareConcurrency || 4;
                 const mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
                 if (mem < 2 || cores < 2) return true;
-                if (mobile && (mem < 4 || cores < 4)) return true;
+                if (mobile && (mem < 8 || cores < 8)) return true;
                 return false;
             } catch (e) { return false; }
         })();
@@ -12694,8 +12764,8 @@ const cv = makeProceduralElevationCanvas();
             '顯示設定': 'Display settings',
             '語言': 'Language',
             '效能模式': 'Performance mode',
-            '低效能': 'Light',
-            '高效能': 'Full',
+            '精簡版': 'Light',
+            '完整版': 'Full',
             '地形顯示': 'Terrain display',
 '名稱': 'Names',
             '外框': 'Outlines',
@@ -12726,7 +12796,29 @@ const cv = makeProceduralElevationCanvas();
             '0.25 天/秒': '0.25 day/s',
             '1 天/秒': '1 day/s',
             '3 天/秒': '3 days/s',
-            '7 天/秒': '7 days/s'
+            '7 天/秒': '7 days/s',
+            '資料來源': 'Sources',
+            '資料來源與版權': 'Sources & License',
+            '月面影像與地形': 'Lunar imagery & terrain',
+            '影像代理服務': 'Image proxy service',
+            '程式庫與字型': 'Libraries & fonts',
+            '天文資料': 'Astronomical data',
+            'NASA LROC WAC 月面彩色馬賽克（SVS #4720）· 公眾領域': 'NASA LROC WAC lunar color mosaic (SVS #4720) · public domain',
+            'NASA LOLA 數值地形模型（SVS #4720）· 公眾領域': 'NASA LOLA digital elevation model (SVS #4720) · public domain',
+            'Solar System Scope 8K 月球紋理（LROC WAC 馬賽克）· CC BY 4.0': 'Solar System Scope 8K Moon texture (LROC WAC mosaic) · CC BY 4.0',
+            'Three.js 範例備援紋理（moon_1024.jpg）· MIT': 'Three.js example fallback texture (moon_1024.jpg) · MIT',
+            '本機 Stellarium 紋理（textures\\ 資料夾）· 源自 NASA LROC／LOLA 公眾領域影像': 'Local Stellarium textures (textures\\ folder) · derived from NASA LROC/LOLA public-domain imagery',
+            'images.weserv.nl 免費圖片縮放／快取服務（BSD 3-Clause）': 'images.weserv.nl free image resize/cache service (BSD 3-Clause)',
+            'Three.js（3D 渲染）· MIT': 'Three.js (3D rendering) · MIT',
+            'OrbitControls（Three.js 官方控制器）· MIT': 'OrbitControls (official Three.js controls) · MIT',
+            'Tailwind CSS（樣式）· MIT': 'Tailwind CSS (styling) · MIT',
+            'Font Awesome Free 6.4（圖示）· 圖示 CC BY 4.0／字型 SIL OFL 1.1／程式碼 MIT': 'Font Awesome Free 6.4 (icons) · icons CC BY 4.0 / font SIL OFL 1.1 / code MIT',
+            'Inter 字型（Google Fonts）· SIL OFL 1.1': 'Inter font (Google Fonts) · SIL OFL 1.1',
+            '月相與天平動公式：J. Meeus《Astronomical Algorithms》': 'Moon phases & libration: J. Meeus, Astronomical Algorithms',
+            'IAU 2003 月球極點模型（Seidelmann, 2003）': 'IAU 2003 lunar pole model (Seidelmann, 2003)',
+            '天平動多項式參照 Stellarium 26.2 實作': 'Libration polynomials referenced from Stellarium 26.2',
+            '地形特徵名稱與座標：IAU 行星命名總表（USGS Astrogeology）· 公眾領域': 'Feature names & coordinates: IAU Gazetteer of Planetary Nomenclature (USGS Astrogeology) · public domain',
+            'NASA 素材依 NASA 媒體使用準則以事實陳述方式使用，不構成 NASA 背書。本網頁不收集或上傳任何個人資料。': 'NASA material is used factually per NASA media use guidelines; no NASA endorsement implied. This page does not collect or upload any personal data.'
         };
 
         // Rows that mix fixed wording with a live value span: { lead, trail? }.
@@ -12756,8 +12848,9 @@ const cv = makeProceduralElevationCanvas();
                 'Field rotation angle: a pure image rotation (this parameter is used directly). It does not change the Moon\'s attitude relative to Earth, so real data such as position angle P and libration are unaffected.',
             '月面 selenographic 經緯線：緯度圈與經度輻射線，跟隨月體一起旋轉（受觀測者視差與平衡動影響）':
                 'Selenographic graticule on the lunar surface: latitude circles and radiating longitude lines, rotating with the Moon (affected by the observer\'s parallax and libration).',
-            '效能模式：低效能使用輕量正面月球（無立體地形、無照片疊圖、無自由視角）；高效能保留完整 3D 功能。切換後重新整理立即生效。':
-                'Performance mode: Light uses a lightweight front-side Moon (no 3D relief, no photo overlay, no free-view rotation); Full keeps all 3D features. The change takes effect after the page reloads.'
+            '效能模式：精簡版使用輕量正面月球（無立體地形、無照片疊圖、無自由視角）；完整版保留完整 3D 功能。切換後重新整理立即生效。':
+                'Performance mode: Light uses a lightweight front-side Moon (no 3D relief, no photo overlay, no free-view rotation); Full keeps all 3D features. The change takes effect after the page reloads.',
+            '資料來源版權': 'Sources & License'
         };
 
         const I18N_DOC = {
@@ -12875,7 +12968,7 @@ const cv = makeProceduralElevationCanvas();
             if (!modeAutoNote) return;
             let saved = null;
             try { saved = localStorage.getItem('moonterrain.mode'); } catch (e) { /* private mode */ }
-            modeAutoNote.textContent = saved ? '' : (state.lang === 'en' ? 'auto: ' : '自動判定：') + (state.lowPerf ? (state.lang === 'en' ? 'Light' : '低效能') : (state.lang === 'en' ? 'Full' : '高效能'));
+            modeAutoNote.textContent = saved ? '' : (state.lang === 'en' ? 'auto: ' : '自動判定：') + (state.lowPerf ? (state.lang === 'en' ? 'Light' : '精簡版') : (state.lang === 'en' ? 'Full' : '完整版'));
         }
         updateModeNote();
         if (perfModeSel) {
@@ -12890,6 +12983,17 @@ const cv = makeProceduralElevationCanvas();
                 ? 'Made by Bing-Syun Wu, Earth Science Teacher, Hui-Wen Senior High School'
                 : '臺中市立惠文高中地球科學教師吳秉勳製作';
         }
+        const creditsModal = document.getElementById('credits-modal');
+        const btnCredits = document.getElementById('btn-credits');
+        const btnCloseCredits = document.getElementById('btn-close-credits');
+        function openCreditsModal() { if (creditsModal) creditsModal.classList.add('open'); }
+        function closeCreditsModal() { if (creditsModal) creditsModal.classList.remove('open'); }
+        if (btnCredits) btnCredits.addEventListener('click', openCreditsModal);
+        if (btnCloseCredits) btnCloseCredits.addEventListener('click', closeCreditsModal);
+        if (creditsModal) {
+            creditsModal.addEventListener('click', (e) => { if (e.target === creditsModal) closeCreditsModal(); });
+        }
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCreditsModal(); });
 
         toggleBrightLabels.addEventListener('change', (e) => { state.showBrightLabels = e.target.checked; markDirty(); });
         toggleDarkLabels.addEventListener('change', (e) => { state.showDarkLabels = e.target.checked; markDirty(); });
