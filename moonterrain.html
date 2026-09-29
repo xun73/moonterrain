@@ -246,6 +246,12 @@
            with the other panels in the "Collapsible panels" block above). */
         #overlay-panel { width: 100%; }
 
+        /* 低效能模式：捨去照片疊圖、自由旋轉（含畫面中心標記）與地形起伏。
+           對應欄位直接不顯示，三個面板以「主欄位 + 設定」兩欄呈現。 */
+        body.lowPerf #overlay-panel,
+        body.lowPerf #free-rotate-row,
+        body.lowPerf #relief-row { display: none; }
+
         /* Side panels (settings + search): a second stacked column next to the left one.
            Both columns always stay as themselves — they never collapse into a menu
            icon/drawer; on narrower windows they just shrink normally (two columns at
@@ -273,6 +279,8 @@
             #overlay-panel { grid-column: 1; grid-row: 2; }
             #search-panel { grid-column: 2; grid-row: 2; }
             #main-panel, #settings-panel, #overlay-panel, #search-panel { min-width: 0; }
+            /* 低效能模式隱藏照片疊圖後，查詢面板承接左下格位。 */
+            body.lowPerf #search-panel { grid-column: 1; grid-row: 2; }
             #search-panel { max-height: none !important; }
         }
         @media (max-width: 639px) {
@@ -441,6 +449,14 @@
                         </div>
                     </div>
 
+                    <div class="flex items-center justify-between gap-3" title="效能模式：低效能使用輕量正面月球（無立體地形、無照片疊圖、無自由視角）；高效能保留完整 3D 功能。切換後重新整理立即生效。">
+                        <span class="text-[13px] text-gray-300 whitespace-nowrap">效能模式 <span id="mode-auto-note" class="text-[11px] text-emerald-400"></span></span>
+                        <select id="perf-mode" class="bg-gray-800 border border-gray-600 rounded px-1.5 py-1 text-[11px] text-white focus:outline-none focus:border-blue-500">
+                            <option value="low">低效能</option>
+                            <option value="high">高效能</option>
+                        </select>
+                    </div>
+
                     <div class="flex items-center justify-between gap-3">
                         <span class="text-[13px] text-gray-300">地形顯示</span>
                         <div class="flex items-center gap-3">
@@ -486,22 +502,9 @@
                         <input type="range" id="detail-slider" min="0" max="30" step="1" value="2" class="w-20">
                     </div>
 
-                    <div class="flex items-center justify-between gap-3">
+                    <div class="flex items-center justify-between gap-3" id="relief-row">
                         <span class="text-[13px] text-gray-300 whitespace-nowrap">地形起伏 <span id="relief-value" class="text-sky-400 font-semibold">1.0</span>×</span>
                         <input type="range" id="relief-slider" min="0" max="5" step="0.1" value="1" class="w-20">
-                    </div>
-
-                    <div class="flex items-center justify-between gap-3" title="依裝置效能自動選用紋理與地形解析度；手動選擇會立即重新整理生效">
-                        <span class="text-[13px] text-gray-300 whitespace-nowrap">效能品質</span>
-                        <div class="flex items-center gap-2">
-                            <span id="perf-tier" class="text-[11px] text-emerald-400"></span>
-                            <select id="perf-quality" class="bg-gray-800 border border-gray-600 rounded px-1.5 py-1 text-[11px] text-white focus:outline-none focus:border-blue-500">
-                                <option value="auto">自動</option>
-                                <option value="high">高品質</option>
-                                <option value="mid">中品質</option>
-                                <option value="low">低品質</option>
-                            </select>
-                        </div>
                     </div>
 
                     <div class="border-t border-slate-700 pt-2 mt-1">
@@ -512,7 +515,7 @@
                         </div>
                         <div class="flex items-center justify-between gap-3 mt-1.5">
                             <span class="text-[13px] text-gray-300 whitespace-nowrap">放大縮小 <span id="zoom-value" class="text-sky-400 font-semibold">1.0</span>×</span>
-                            <input type="range" id="zoom-slider" min="0.6" max="24" step="0.01" value="1" class="w-20">
+                            <input type="range" id="zoom-slider" min="0.2" max="24" step="0.1" value="1" class="w-20">
                         </div>
                         <div class="flex items-center justify-between gap-3 mt-1.5">
                             <span class="text-[13px] text-gray-300">翻轉</span>
@@ -533,7 +536,7 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="flex items-center justify-between gap-3 mt-1.5">
+                        <div class="flex items-center justify-between gap-3 mt-1.5" id="free-rotate-row">
                             <span class="text-[13px] text-gray-300">自由旋轉月球</span>
                             <div class="flex items-center gap-3">
                                 <label class="relative inline-flex items-center cursor-pointer">
@@ -9843,6 +9846,18 @@
         // =====================================================================
         // 2. Application State
         // =====================================================================
+        // 低效能模式自動偵測：記憶體/核心數偏低、或手機資源有限者預設進入
+        // 低效能（輕量正面月球）。可在 顯示設定 → 效能模式 手動切換並存檔。
+        const LOW_PERF_AUTO = (function () {
+            try {
+                const mem = navigator.deviceMemory || 4;
+                const cores = navigator.hardwareConcurrency || 4;
+                const mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
+                if (mem < 2 || cores < 2) return true;
+                if (mobile && (mem < 4 || cores < 4)) return true;
+                return false;
+            } catch (e) { return false; }
+        })();
         const state = {
             lang: 'tw',
             date: new Date(),
@@ -9884,7 +9899,13 @@
             searchQuery: '',
             typeFilter: 'all',
             reliefScale: 1,
-            quality: (function () { try { return localStorage.getItem('moonterrain.quality') || 'auto'; } catch (e) { return 'auto'; } })(),
+            lowPerf: (function () {
+                try {
+                    const m = localStorage.getItem('moonterrain.mode');
+                    if (m === 'low' || m === 'high') return m === 'low';
+                } catch (e) { /* private mode */ }
+                return LOW_PERF_AUTO;
+            })(),
             showSurface: true,        // show/hide the moon surface mesh
             showLatLngGrid: false,    // show/hide the selenographic graticule
             overlayScale: 0.5,         // photo overlay size multiplier (1 = fills the window; 0.5 = half size)
@@ -9893,6 +9914,14 @@
             overlayFlipH: false,      // photo overlay left/right mirror
             overlayFlipV: false       // photo overlay up/down mirror
         };
+
+        // Low-perf mode class: CSS-wise it hides 照片疊圖 / 自由旋轉 / 地形起伏 fields.
+        if (state.lowPerf) document.body.classList.add('lowPerf');
+        function setPerfMode(low) {
+            state.lowPerf = low;
+            try { localStorage.setItem('moonterrain.mode', low ? 'low' : 'high'); } catch (e) { /* private mode */ }
+            location.reload();
+        }
 
         // =====================================================================
         // 3. Astronomical Calculations (Meeus-based lunar ephemeris)
@@ -10348,10 +10377,14 @@
         const moonAgeEl = document.getElementById('moon-age');
         const langTwBtn = document.getElementById('lang-tw');
         const langEnBtn = document.getElementById('lang-en');
+        const perfModeSel = document.getElementById('perf-mode');
+        const modeAutoNote = document.getElementById('mode-auto-note');
         const toggleBrightLabels = document.getElementById('toggle-bright-labels');
         const toggleDarkLabels = document.getElementById('toggle-dark-labels');
         const detailSlider = document.getElementById('detail-slider');
         const detailValue = document.getElementById('detail-value');
+        // the "地形詳細程度" value to restore when switching from a type chip back to 全部
+        let lastAllDetail = 2;
         const reliefSlider = document.getElementById('relief-slider');
         const reliefValue = document.getElementById('relief-value');
         const toggleAllLabels = document.getElementById('toggle-all-labels');
@@ -10547,6 +10580,7 @@
         // 自由旋轉旁的即時讀數：相機視角所對應的「畫面中心」月面緯度／經度天平動量。
         // 未旋轉（視角固定在月下點）時與資訊面板「天平動」相同；轉到背面時會離開月下點。
         function updateViewLibrationInfo() {
+            if (state.lowPerf) return; // 無自由旋轉，無需讀數
             const el = document.getElementById('view-libration');
             if (!el) return;
             const v = moonViewCenterLibration(librationJD());
@@ -10682,37 +10716,30 @@
         outlineLayerEl.appendChild(outlineRenderer.domElement);
         outlineRenderer.domElement.style.display = 'block';
 
-        // ---- 效能品質分級：依裝置效能自動選擇資料解析度（可在顯示設定手動改） ----
-        // 好機器：8K 網紋、4096 LOLA 地形、高密度網格、裝置像素比 2；
-        // 差機器：1-2K 網紋、1024-2048 地形、低密度網格、裝置像素比 1，
-        // 換取下載量、解碼成本與每幀填充率的大幅下降，低畫質仍保有完整月相功能。
-        // 手動選擇會存進 localStorage（state.quality），下次載入即套用該分級。
+        // ---- 渲染解析度：高效能＝最高畫質；低效能＝輕量正面月球 ----
+        // 高效能：網紋依 GPU 上限取 8K／4K、4096 LOLA 地形、高密度網格、裝置像素比 2。
+        // 低效能：64 段球體、網紋縮到 2K、無位移地形／法線／凸起、裝置像素比 1，
+        //         呈現平面化的正面月球照片，僅保留標籤、晨昏線與查詢資料功能。
         const gpuMaxTex = (renderer.capabilities && renderer.capabilities.maxTextureSize) || 4096;
-        function detectPerfTier() {
-            const mem = navigator.deviceMemory || 4;              // GB（目前僅 Chrome 提供）
-            const cores = navigator.hardwareConcurrency || 4;     // 邏輯核心數
-            let score = 0;
-            if (mem >= 8) score += 2; else if (mem >= 4) score += 1;
-            if (cores >= 8) score += 2; else if (cores >= 4) score += 1;
-            if (gpuMaxTex >= 8192) score += 1;
-            if (isMobile) score -= 1;
-            return score <= 2 ? 'low' : (score <= 4 ? 'mid' : 'high');
+        const prCap = state.lowPerf ? 1 : 2;
+        const segments = state.lowPerf ? 64 : (isMobile ? 256 : 512);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, prCap));
+        outlineRenderer.setPixelRatio(Math.min(window.devicePixelRatio, prCap));
+        console.log('[moon] ' + (state.lowPerf ? 'low-perf' : 'full') + ' render: segments ' + segments + ', pixel ratio cap ' + prCap);
+        // 網紋解析度須達此門檻才視為「夠清晰」而採用（行動裝置門檻較低）。
+        const colorOkMin = () => (isMobile ? 2048 : 3072);
+        // 低效能：把貼在球上的網紋縮小成 2K，降低 GPU 上傳與採樣成本。
+        function downscaleTextureTo2K(source) {
+            const c = document.createElement('canvas');
+            c.width = 2048; c.height = 1024;
+            const ctx = c.getContext('2d');
+            if (ctx && source) ctx.drawImage(source, 0, 0, 2048, 1024);
+            const t = new THREE.CanvasTexture(c);
+            t.anisotropy = 1;
+            t.minFilter = THREE.LinearMipmapLinearFilter;
+            t.magFilter = THREE.LinearFilter;
+            return t;
         }
-        const perf = { autoTier: detectPerfTier() };
-        perf.tier = (state.quality && state.quality !== 'auto') ? state.quality : perf.autoTier;
-        const PERF = {
-            high: { color: () => Math.min(gpuMaxTex, isMobile ? 4096 : 8192), segments: () => (isMobile ? 256 : 512), disp: 4096, pr: 2, tag: '8K' },
-            mid:  { color: () => Math.min(gpuMaxTex, isMobile ? 2048 : 4096), segments: () => (isMobile ? 128 : 256), disp: 2048, pr: 1.5, tag: '4K' },
-            low:  { color: () => (isMobile ? 1024 : 2048), segments: () => (isMobile ? 96 : 128), disp: 1024, pr: 1, tag: '1-2K' }
-        };
-        const perfCfg = () => PERF[perf.tier] || PERF.high;
-        // Dense mesh + smooth-shaded relief: keeps magnified terrain from looking faceted/blocky.
-        const segments = perfCfg().segments();
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, perfCfg().pr));
-        outlineRenderer.setPixelRatio(Math.min(window.devicePixelRatio, perfCfg().pr));
-        console.log('[moon] perf tier = ' + perf.tier + ' (' + perfCfg().tag + '), segments ' + segments + ', pixel ratio cap ' + perfCfg().pr);
-        // 低解析分級下，proxied 的 hiRes 圖寬較小；用分級門檻判斷「夠清晰」而採用。
-        const colorOkMin = () => (perf.tier === 'low' ? (isMobile ? 768 : 1536) : (isMobile ? 2048 : 3072));
 
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableRotate = false;   // observation angle is set only by the observer's location
@@ -10720,7 +10747,7 @@
         controls.screenSpacePanning = true;
         controls.panSpeed = 0.9;
         controls.zoomSpeed = 0.5;           // finer wheel zoom for precise telescope framing
-        controls.minZoom = 0.6;          // zoom-out limit (whole Moon + margin)
+        controls.minZoom = 0.2;          // zoom-out floor: down to 0.2x (whole Moon + generous margin)
         controls.maxZoom = 24;           // deep zoom-in limit
         controls.enableDamping = false;
         controls.mouseButtons = { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN };
@@ -10769,13 +10796,13 @@
         // 2K JPEG / 16-bit TIFF, so the SSS mosaic is our sharpest public CORS-able source.
         const svcBase = 'https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/';
         const proxied = (u, w, h, extra) => 'https://images.weserv.nl/?url=' + encodeURIComponent(u) + (w ? ('&w=' + w + (h ? '&h=' + h : '')) : '') + (extra || '');
-        // 紋理目標解析度由上方效能分級決定（PERF 表格），不再單純依 GPU 上限。
-        const useLocalColor = perfCfg().color() >= 4096;   // 目標 ≥ 4K 時優先讀本機 Stellarium 4K
-        const useLocalDisp  = perfCfg().disp >= 4096;      // 4096 LOLA 地形只保留給高階裝置
-        const hiTarget = perfCfg().color();
+        // 網紋目標解析度：高效能依 GPU 上限取 8K／4K；低效能固定取 2K。
+        const useLocalColor = true;           // 一律優先讀本機 Stellarium 4K（低效能再縮小成 2K）
+        const useLocalDisp  = !state.lowPerf; // 4096 LOLA 地形只給高效能；低效能不需地形高度
+        const hiTarget = state.lowPerf ? 2048 : Math.min(gpuMaxTex, isMobile ? 4096 : 8192);
         const hiResColorUrl = proxied('https://www.solarsystemscope.com/textures/download/8k_moon.jpg', hiTarget, hiTarget / 2, '&q=95');
         const colorMapUrl = proxied(svcBase + 'lroc_color_2k.jpg', 2048, 1024);
-        const dispW = perfCfg().disp;
+        const dispW = state.lowPerf ? 1024 : 4096;
         const displacementMapUrl = proxied(svcBase + 'ldem_3_8bit.jpg', dispW, Math.round(dispW / 2), '&q=90&fit=inside&blur=0.6');
         const fallbackColorUrl = 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/moon_1024.jpg';
 
@@ -10797,6 +10824,7 @@
 
         // Per-pixel relief shading from the LOLA normal map (Stellarium's moon_normals.png).
         function loadNormalTexture() {
+            if (state.lowPerf) return; // 低效能模式不載法線圖／不做立體起伏
             textureLoader.load(localNormalUrl, function (tex) {
                 tex.anisotropy = maxAniso;
                 tex.minFilter = THREE.LinearMipmapLinearFilter;
@@ -10885,6 +10913,7 @@
         // User-adjustable relief strength: 1.0 = physically correct (see CORRECT_RELIEF_AMP).
         let reliefRaf = 0;
         function setReliefScale(scale) {
+            if (state.lowPerf) return; // 低效能模式為平面月球，無地形起伏可調
             state.reliefScale = scale;
             reliefAmp = CORRECT_RELIEF_AMP * scale;
             moonMaterial.bumpScale = BUMP_BASE * scale;
@@ -11014,6 +11043,29 @@
             }
         }
         function loadColorTexture() {
+            if (state.lowPerf) {
+                // 低效能：只用「真實月球照片」網紋並一律縮小為 2K，完全不用模擬的
+                // 程序化月面顏色。來源依序：本機 Stellarium 4K → NASA LROC 2K →
+                // 1024 備援照片；全部真實照片都失敗（離線且本機網紋缺失）時，
+                // 才以程序化月面做最後一道保險，避免貼圖空白。
+                let lpDone = false;
+                const lpFinish = (tex) => {
+                    if (lpDone) return;
+                    lpDone = true;
+                    setColorMap(tex);
+                    slotDone('color');
+                };
+                const lpLoad = (url) => new Promise((res) => {
+                    textureLoader.load(url, (tex) => res(tex && tex.image ? downscaleTextureTo2K(tex.image) : null),
+                        undefined, () => res(null));
+                });
+                lpLoad(localColorUrl)
+                    .then((t) => t || lpLoad(colorMapUrl))
+                    .then((t) => t || lpLoad(fallbackColorUrl))
+                    .then((t) => { if (!lpDone) lpFinish(t || new THREE.CanvasTexture(makeProceduralColorCanvas())); });
+                setTimeout(() => { if (!lpDone) lpFinish(new THREE.CanvasTexture(makeProceduralColorCanvas())); }, 60000);
+                return;
+            }
             let hiTex = null;          // 4K Solar-System-Scope (preferred)
             let twoTex = null;         // NASA 2K standby
             let colorDone = false;
@@ -11038,8 +11090,7 @@
                 }
             };
             let fallbackLoading = false;
-            // Local Stellarium 4K first (instant, no network); used only when the tier target
-            // is at least 4K (perfCfg().color() >= 4096), otherwise the proxied size wins.
+            // 本機 Stellarium 4K 優先（即時、無網路），失敗再走 applyBest 退回遠端來源。
             if (useLocalColor) {
                 textureLoader.load(localColorUrl, function (tex) {
                     if (!tex || !tex.image) { applyBest(); return; }
@@ -11091,6 +11142,15 @@
             }, 45000);
         }
         function loadElevationTexture() {
+            if (state.lowPerf) {
+                // 低效能：平面月球，布載任何地形高度；只需關閉高度槽以免卡在載入畫面。
+                moonMaterial.displacementMap = null;
+                moonMaterial.bumpMap = null;
+                moonMaterial.displacementScale = 0;
+                moonMaterial.needsUpdate = true;
+                slotDone('elev');
+                return;
+            }
             const applyProc = () => {
                 console.warn('[moon] using procedural elevation');
 const cv = makeProceduralElevationCanvas();
@@ -11121,23 +11181,17 @@ const cv = makeProceduralElevationCanvas();
                 refreshLabelAnchors();
                 slotDone('elev');
             };
-            // LOLA 地形來源也依效能分級：
-            //   高階（disp=4096）：先用本機 4096x2048（由 ldem_16_uint.tif 轉出），
-            //     放大時月底/剪影才有真正的細節，失敗再退回縮小的遠端 8-bit LOLA；
-            //   中/低階：直接抓 disp 尺寸（2048 / 1024）的遠端資料，省下載與解碼成本。
+            // LOLA 地形一律取最高解析度：先用本機 4096x2048（由 ldem_16_uint.tif 轉出），
+            // 放大時月底/剪影才有真正的細節，失敗再退回縮小的遠端 8-bit LOLA。
             const loadRemoteDisp = () => {
                 textureLoader.load(displacementMapUrl, applyTerrain, (e) => onSlotProgress('elev', e), function () { applyProc(); });
             };
-            if (useLocalDisp) {
-                textureLoader.load(localDisplacementUrl, function (tex) {
-                    console.log('[moon] 4096 LOLA displacement active (converted from ldem_16_uint.tif)');
-                    applyTerrain(tex);
-                }, undefined, function () {
-                    loadRemoteDisp();
-                });
-            } else {
+            textureLoader.load(localDisplacementUrl, function (tex) {
+                console.log('[moon] 4096 LOLA displacement active (converted from ldem_16_uint.tif)');
+                applyTerrain(tex);
+            }, undefined, function () {
                 loadRemoteDisp();
-            }
+            });
         }
         loadColorTexture();
         loadElevationTexture();
@@ -11414,6 +11468,12 @@ const cv = makeProceduralElevationCanvas();
         const LEADER_MIN_PX = 5;      // below this the label is left exactly on the dot
         const LABEL_BOX_PAD = 1;      // px of clearance demanded between two boxes
         const LABEL_MAX_CASCADE = 30; // give up shifting after this many candidate slots
+        // A label must stay near its terrain dot: letting the vertical cascade run the
+        // full 30 slots can throw a crowded name far from its feature — e.g. 賴納伽瑪 in
+        // the dense Oceanus Procellarum ends up parked against the top edge of the screen
+        // with a long empty leader, nearly invisible. Beyond this fraction of the viewport
+        // height no slot is accepted (the label falls back to its terrain dot).
+        const LEADER_FRAC = 0.22;
 
         // Rough text metrics, cached per label and only recomputed when the text or
         // language changes. Reading offsetWidth for every label each frame would force
@@ -11432,7 +11492,14 @@ const cv = makeProceduralElevationCanvas();
         }
 
         function resolveLabelCollisions(items, viewH) {
-            if (items.length < 2) return;
+            if (items.length < 2) {
+                // A lone label skips the placement loop below, yet the write-out still
+                // computes its top from q.ly. Leave it exactly on its dot (AND when a
+                // single type filter leaves just 賴納伽瑪 on screen, this is what keeps
+                // the name anchored to the feature instead of drifting to the top edge).
+                if (items.length === 1) { items[0].dy = 0; items[0].ly = items[0].y; }
+                return;
+            }
             // Most important first: selected, then terminator, then dark, then bright,
             // and within a tier the more prominent (lower-level) name keeps its spot.
             items.sort((a, b) => (a.prio - b.prio) || (a.level - b.level));
@@ -11472,6 +11539,7 @@ const cv = makeProceduralElevationCanvas();
             let maxH = 0;
             for (const it of items) if (it.h > maxH) maxH = it.h;
             const step = maxH + 2 * LABEL_BOX_PAD;
+            const maxDy = (viewH !== undefined) ? Math.max(90, viewH * LEADER_FRAC) : Infinity;
             for (const it of items) {
                 let dy = 0, placed = true;
                 if (hits(it, 0)) {
@@ -11480,6 +11548,9 @@ const cv = makeProceduralElevationCanvas();
                         // alternate above / below so a cluster of three stays compact
                         const cand = (k % 2 === 1) ? -Math.ceil(k / 2) * step
                                                   : Math.ceil(k / 2) * step;
+                        // The cascade grows outward, so stopping at the leader cap also
+                        // ends the whole search: the label keeps only its terrain dot.
+                        if (viewH !== undefined && Math.abs(cand) > maxDy) break;
                         // prefer a slot that is still on screen, so a label crowded at
                         // the top edge is never pushed out of the viewport
                         if (viewH !== undefined && it.y + cand - it.h / 2 < 0) continue;
@@ -11534,8 +11605,11 @@ const cv = makeProceduralElevationCanvas();
                     const sel = isSelected(label.data.id);
                     const isSat = !!label.data.sat;
                     if (isSat && !satZoomOk) { syncOutline(label.data, sel); return; }
+                    // Type filter: when a single terrain type is chosen, show only that
+                    // type (all of it), but the "地形詳細程度" slider still caps how many
+                    // names its crowded ranks may place at once.
                     const typeOk = state.typeFilter === 'all' || label.data.type === state.typeFilter || sel;
-                    const rankOk = state.typeFilter !== 'all' || isSat || label.data.rank <= effMaxLevel || sel;
+                    const rankOk = isSat || label.data.rank <= effMaxLevel || sel;
                     syncOutline(label.data, typeOk && rankOk);
                 });
                 return;
@@ -11566,9 +11640,10 @@ const cv = makeProceduralElevationCanvas();
                     return;
                 }
                 // Type filter: when a single terrain type is chosen, show only that type
-                // (all of it, ignoring the progressive detail ranks).
+                // (all of it), but honor the progressive detail ranks so the
+                // "地形詳細程度" slider can thin out an overcrowded theme.
                 const typeOk = state.typeFilter === 'all' || label.data.type === state.typeFilter || sel;
-                const rankOk = state.typeFilter !== 'all' || isSat || label.data.rank <= effMaxLevel || sel;
+                const rankOk = isSat || label.data.rank <= effMaxLevel || sel;
                 if (!typeOk || !rankOk) {
                     syncOutline(label.data, false);
                     el.style.opacity = '0';
@@ -12198,11 +12273,17 @@ const cv = makeProceduralElevationCanvas();
         // (you can look at the far side); right/middle-drag still pan; wheel zooms.
         function applyFreeRotate() {
             const on = !!state.freeRotate;
+            if (state.lowPerf && on) return; // 低效能模式不能開啟自由旋轉（仍保持平移瀏覽）
             controls.enableRotate = on;
             controls.enablePan = true;
             controls.mouseButtons = on
                 ? { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN }
                 : { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN };
+            // 手機／平板：初始設定只有 ONE: PAN，若不同步換成 ROTATE，手指拖曳
+            // 永遠都是平移，自由旋轉在觸控設備上會完全失效（兩指仍維持縮放+平移）。
+            controls.touches = on
+                ? { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN }
+                : { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_PAN };
             state.panActive = false;
             state.panRemain = null;
             if (on) {
@@ -12466,7 +12547,26 @@ const cv = makeProceduralElevationCanvas();
                     b.appendChild(d);
                 }
                 b.appendChild(document.createTextNode(label));
-                b.onclick = () => { state.typeFilter = type; renderTypeChips(); renderFeatureList(); markDirty(); };
+                b.onclick = () => {
+                    // When leaving the "全部" view, remember its slider value so returning
+                    // to it restores the exact terrain density instead of inheriting the
+                    // all-of-theme maximum a type chip pinned the slider to.
+                    if (state.typeFilter === 'all' && type !== 'all') lastAllDetail = state.detailLevel;
+                    state.typeFilter = type;
+                    // Show all of the chosen theme first: pin the detail slider to its
+                    // maximum so every member of the type is visible. The user can then
+                    // drag "地形詳細程度" down to thin out an overcrowded theme.
+                    if (type !== 'all') {
+                        state.detailLevel = 30;
+                        detailSlider.value = 30;
+                        if (detailValue) detailValue.textContent = 30;
+                    } else {
+                        state.detailLevel = lastAllDetail;
+                        detailSlider.value = lastAllDetail;
+                        if (detailValue) detailValue.textContent = lastAllDetail;
+                    }
+                    renderTypeChips(); renderFeatureList(); markDirty();
+                };
                 wrap.appendChild(b);
             });
         }
@@ -12593,13 +12693,11 @@ const cv = makeProceduralElevationCanvas();
             '下載目前畫面': 'Download current view',
             '顯示設定': 'Display settings',
             '語言': 'Language',
+            '效能模式': 'Performance mode',
+            '低效能': 'Light',
+            '高效能': 'Full',
             '地形顯示': 'Terrain display',
-'效能品質': 'Performance quality',
-'自動': 'Auto',
-'高品質': 'High quality',
-'中品質': 'Medium quality',
-'低品質': 'Low quality',
-            '名稱': 'Names',
+'名稱': 'Names',
             '外框': 'Outlines',
             '地形名稱': 'Feature names',
             '亮面': 'Bright side',
@@ -12658,8 +12756,8 @@ const cv = makeProceduralElevationCanvas();
                 'Field rotation angle: a pure image rotation (this parameter is used directly). It does not change the Moon\'s attitude relative to Earth, so real data such as position angle P and libration are unaffected.',
             '月面 selenographic 經緯線：緯度圈與經度輻射線，跟隨月體一起旋轉（受觀測者視差與平衡動影響）':
                 'Selenographic graticule on the lunar surface: latitude circles and radiating longitude lines, rotating with the Moon (affected by the observer\'s parallax and libration).',
-            '依裝置效能自動選用紋理與地形解析度；手動選擇會立即重新整理生效':
-                'Texture/terrain resolution follows device performance automatically; choosing manually reloads the page to apply it.'
+            '效能模式：低效能使用輕量正面月球（無立體地形、無照片疊圖、無自由視角）；高效能保留完整 3D 功能。切換後重新整理立即生效。':
+                'Performance mode: Light uses a lightweight front-side Moon (no 3D relief, no photo overlay, no free-view rotation); Full keeps all 3D features. The change takes effect after the page reloads.'
         };
 
         const I18N_DOC = {
@@ -12762,15 +12860,28 @@ const cv = makeProceduralElevationCanvas();
             state.lang = lang;
             applyI18n();
             updateCredit();
-            updatePerfTierLabel();
             refreshObservationInfo();
             renderTypeChips();
             renderFeatureList();
             if (state.selectedFeature) showDetail(state.selectedFeature);
             markDirty();
+            updateModeNote();
         }
         langTwBtn.addEventListener('click', () => setLang('tw'));
         langEnBtn.addEventListener('click', () => setLang('en'));
+
+        // 效能模式：下拉反映目前狀態；沒有手動存檔時附註「自動判定」來源。
+        function updateModeNote() {
+            if (!modeAutoNote) return;
+            let saved = null;
+            try { saved = localStorage.getItem('moonterrain.mode'); } catch (e) { /* private mode */ }
+            modeAutoNote.textContent = saved ? '' : (state.lang === 'en' ? 'auto: ' : '自動判定：') + (state.lowPerf ? (state.lang === 'en' ? 'Light' : '低效能') : (state.lang === 'en' ? 'Full' : '高效能'));
+        }
+        updateModeNote();
+        if (perfModeSel) {
+            perfModeSel.value = state.lowPerf ? 'low' : 'high';
+            perfModeSel.addEventListener('change', (e) => setPerfMode(e.target.value === 'low'));
+        }
         applyI18n();
         function updateCredit() {
             const el = document.getElementById('credit-text');
@@ -12788,6 +12899,7 @@ const cv = makeProceduralElevationCanvas();
         const centerMarker = document.getElementById('center-marker');
         const toggleCenterMarker = document.getElementById('toggle-center-marker');
         function applyCenterMarker() {
+            if (state.lowPerf) { if (centerMarker) centerMarker.style.display = 'none'; return; }
             if (!centerMarker) return;
             centerMarker.style.display = state.showCenterMarker ? 'block' : 'none';
         }
@@ -12800,16 +12912,15 @@ const cv = makeProceduralElevationCanvas();
             });
         }
         teleRot.addEventListener('input', (e) => { state.teleRot = parseFloat(e.target.value) || 0; teleRotValue.textContent = state.teleRot; applyTelescope(); });
-        // Zoom slider mirrors OrbitControls wheel zoom (camera.zoom 0.6..24)
+        // Zoom slider mirrors OrbitControls wheel zoom (camera.zoom 0.2..24)
         function applyZoomSlider() {
             if (!camera) return;
             camera.zoom = parseFloat(zoomSlider.value) || 1;
             camera.updateProjectionMatrix();
-            zoomValueEl.textContent = camera.zoom.toFixed(2);
+            zoomValueEl.textContent = camera.zoom.toFixed(1);
             state.panActive = false;
             state.panRemain = null;
             markDirty();
-            applyResponsiveCollapse();
         }
         zoomSlider.addEventListener('input', (e) => { applyZoomSlider(); });
         // keep the slider in sync when the wheel / pinch zoom changes the camera.zoom
@@ -12819,8 +12930,7 @@ const cv = makeProceduralElevationCanvas();
             if (Math.abs(camera.zoom - lastZoomUI) > 1e-4) {
                 lastZoomUI = camera.zoom;
                 zoomSlider.value = camera.zoom;
-                zoomValueEl.textContent = camera.zoom.toFixed(2);
-                applyResponsiveCollapse();
+                zoomValueEl.textContent = camera.zoom.toFixed(1);
             }
         }
         toggleTeleFlipH.addEventListener('change', (e) => { state.teleFlipH = e.target.checked; applyTelescope(); });
@@ -13112,28 +13222,6 @@ const cv = makeProceduralElevationCanvas();
             setReliefScale(s);
         });
 
-        function updatePerfTierLabel() {
-            const el = document.getElementById('perf-tier');
-            if (!el) return;
-            const t = perf.tier === 'high' ? (state.lang === 'tw' ? '高' : 'Hi')
-                : perf.tier === 'mid' ? (state.lang === 'tw' ? '中' : 'Med')
-                : (state.lang === 'tw' ? '低' : 'Lo');
-            const tag = perfCfg().tag;
-            el.textContent = (state.quality === 'auto'
-                ? (state.lang === 'tw' ? '自動：' : 'Auto: ')
-                : (state.lang === 'tw' ? '手動：' : 'Manual: ')) + t + ' ' + tag;
-        }
-        const perfQuality = document.getElementById('perf-quality');
-        if (perfQuality) {
-            perfQuality.value = state.quality;
-            perfQuality.addEventListener('change', (e) => {
-                state.quality = e.target.value;
-                try { localStorage.setItem('moonterrain.quality', state.quality); } catch (err) { /* private mode */ }
-                location.reload();
-            });
-        }
-        updatePerfTierLabel();
-
         searchInput.addEventListener('input', (e) => { state.searchQuery = e.target.value; renderFeatureList(); });
 
         dcClose.addEventListener('click', (e) => { e.stopPropagation(); clearSelection(); });
@@ -13146,54 +13234,15 @@ const cv = makeProceduralElevationCanvas();
         btnCollapseSearch.addEventListener('click', () => { setCollapsed(searchPanel, !searchPanel.classList.contains('collapsed')); });
         btnCollapseOverlay.addEventListener('click', () => { setCollapsed(overlayPanel, !overlayPanel.classList.contains('collapsed')); });
 
-        // 手機 / 窄視窗自動收起：觸發條件有二，取其一即收起。
-        //  1) COMPACT_W 以下（<=640px）：四個面板全寬堆疊，月面上下都被蓋住。
-        //  2) 兩側欄位對中央月亮的遮擋超過 OCCLUDE_FRACTION（預設 30%）：
-        //     把月球目前的畫面寬度（隨縮放而變）與「面板展開後」左右內緣
-        //     之間的縫隙相比——縫隙不足以露出超過 70% 的月面寬度，就代表
-        //     瀏覽器太窄，先收起兩側欄位。
-        // 只在遮擋狀態「跨越門檻」時收放一次（autoCollapsed 記錄目前是否
-        // 由本邏輯收起），之後即使 resize 也不會跟使用者手動的收放打架。
+        // 窄視窗自動收起：只在視窗寬度 <= COMPACT_W 時把四面板全收起，避免月面
+        // 被蓋住。縮放程度不再觸發收放——如果視窗一開始就夠寬、兩側欄位維持展開，
+        // 那麼之後放大月球時欄位也會繼續展開，不會在調整視野的途中突然消失。
+        // 只在收放狀態「跨越門檻」時動作一次（autoCollapsed 記錄目前是否由本邏輯
+        // 收起），之後即使 resize 也不會與使用者的手動收放打架。
         const COMPACT_W = 640;
-        const OCCLUDE_FRACTION = 0.30;
-        const OCCLUDE_PANELS = ['main-panel', 'overlay-panel', 'settings-panel', 'search-panel'];
         let autoCollapsed = false;
-        function moonOcclusionRatio() {
-            const cn = container.getBoundingClientRect();
-            if (cn.width < 1 || cn.height < 1) return 0;
-            scene.updateMatrixWorld(true);
-            camera.updateProjectionMatrix();
-            camera.updateMatrixWorld(true);
-            const c = new THREE.Vector3();
-            moon.getWorldPosition(c);
-            const rightV = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0).normalize();
-            const e = c.clone().addScaledVector(rightV, moonRadius);
-            const pc = c.clone().project(camera);
-            const pe = e.clone().project(camera);
-            if (pc.z > 1 || pc.z < -1 || pe.z > 1 || pe.z < -1) return 0;
-            const toX = (x) => (x + 1) * 0.5 * cn.width + cn.left;
-            const cx = toX(pc.x);
-            const radiusPx = Math.abs(toX(pe.x) - cx);
-            const moonWidth = Math.max(1, radiusPx * 2);
-            // 面板的水平內緣：取「最靠近中央」的左右邊界當作露出區域。
-            // 收起的面板寬度不變、水平範圍不變，量到的仍是面板展開時的佔位，
-            // 因此不會因自己剛收起而誤判成「沒遮擋」而立刻又展開（防來回閃動）。
-            let occlL = cn.left, occlR = cn.left + cn.width;
-            const centerX = cn.left + cn.width / 2;
-            OCCLUDE_PANELS.forEach((id) => {
-                const p = document.getElementById(id);
-                if (!p) return;
-                const r = p.getBoundingClientRect();
-                if (r.width < 1) return;
-                if (r.right <= centerX) occlL = Math.max(occlL, r.right);
-                else if (r.left >= centerX) occlR = Math.min(occlR, r.left);
-                else { occlL = Math.max(occlL, r.left); occlR = Math.min(occlR, r.right); }
-            });
-            const visible = Math.max(0, Math.min(cx + radiusPx, occlR) - Math.max(cx - radiusPx, occlL));
-            return Math.min(1, 1 - visible / moonWidth);
-        }
         function applyResponsiveCollapse() {
-            const want = window.innerWidth <= COMPACT_W || moonOcclusionRatio() > OCCLUDE_FRACTION;
+            const want = window.innerWidth <= COMPACT_W;
             if (want === autoCollapsed) return;
             autoCollapsed = want;
             setCollapsed(mainPanel, want);
