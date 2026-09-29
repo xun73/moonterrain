@@ -170,6 +170,12 @@
         }
         .toggle-min-btn:hover { background: #334155; color: #fff; }
 
+        /* Panel header titles are also collapse/expand targets: on narrow phones
+           the 25px button alone is hard to tap, so the whole title text (icon + label)
+           toggles the panel as well. */
+        .panel-title { cursor: pointer; user-select: none; }
+        .panel-title:hover { color: #fff; }
+
         /* Credit line: sits at the very bottom of the photo-overlay panel. */
         #credit-line { line-height: 1.5; }
 
@@ -264,6 +270,9 @@
             #ui-container input:not([type="range"]):not([type="checkbox"]):not([type="file"]),
             #ui-container select { height: 26px; padding-top: 0; padding-bottom: 0; font-size: 12px; }
             #settings-body .flex, #search-body .flex { min-height: 26px; }
+            /* The collapse buttons become roomy 34px touch targets (out-specs the
+               26px #ui-container button rule via the extra class). */
+            #ui-container .toggle-min-btn { width: 34px; height: 34px; font-size: 13px; }
             #ui-container input[type="date"],
             #ui-container input[type="time"] { font-size: 12px; padding: 0 8px; }
         }
@@ -359,7 +368,7 @@
             <!-- Main panel -->
             <div id="main-panel" class="ui-panel w-full">
                 <div class="flex items-center gap-2">
-                    <p class="text-[12px] font-semibold text-gray-200"><i class="fa-solid fa-moon text-yellow-100 mr-1"></i>月球觀測儀</p>
+                    <p class="panel-title text-[12px] font-semibold text-gray-200" title="收起 / 展開"><i class="fa-solid fa-moon text-yellow-100 mr-1"></i>月球觀測儀</p>
                     <span class="flex-1"></span>
                     <button id="btn-today" class="text-[11px] px-2 py-1 rounded-md bg-slate-700 hover:bg-slate-600 text-gray-200 transition">今天</button>
                     <button id="btn-collapse-main" class="toggle-min-btn" title="收起 / 展開"><i class="fa-solid fa-angles-left"></i></button>
@@ -416,7 +425,7 @@
             <!-- Photo overlay panel (same width as the main panel, docked below it) -->
             <div id="overlay-panel" class="ui-panel w-full">
                 <div class="flex items-center gap-2">
-                    <p class="text-[12px] font-semibold text-gray-200"><i class="fa-solid fa-image mr-1"></i>照片疊圖</p>
+                    <p class="panel-title text-[12px] font-semibold text-gray-200" title="收起 / 展開"><i class="fa-solid fa-image mr-1"></i>照片疊圖</p>
                     <span class="flex-1"></span>
                     <button id="btn-collapse-overlay" class="toggle-min-btn" title="收起 / 展開"><i class="fa-solid fa-angles-left"></i></button>
                 </div>
@@ -470,7 +479,7 @@
                 <!-- Settings panel -->
 <div id="settings-panel" class="ui-panel w-full sm:w-80">
             <div class="flex items-center gap-2 mb-2">
-                <p class="text-[12px] font-semibold text-gray-200"><i class="fa-solid fa-gear mr-1"></i>顯示設定</p>
+                <p class="panel-title text-[12px] font-semibold text-gray-200" title="收起 / 展開"><i class="fa-solid fa-gear mr-1"></i>顯示設定</p>
                 <span class="flex-1"></span>
                 <button id="btn-collapse-side" class="toggle-min-btn" title="收起 / 展開"><i class="fa-solid fa-angles-right"></i></button>
             </div>
@@ -645,7 +654,7 @@
             <!-- Search panel -->
             <div id="search-panel" class="ui-panel w-full sm:w-80 flex flex-col" style="max-height: 46vh;">
                 <div class="flex items-center gap-2 mb-2">
-                    <p class="text-[12px] font-semibold text-gray-200"><i class="fa-solid fa-magnifying-glass mr-1"></i>查詢地形特徵</p>
+                    <p class="panel-title text-[12px] font-semibold text-gray-200" title="收起 / 展開"><i class="fa-solid fa-magnifying-glass mr-1"></i>查詢地形特徵</p>
                     <span class="flex-1"></span>
                     <button id="btn-collapse-search" class="toggle-min-btn" title="收起 / 展開"><i class="fa-solid fa-angles-right"></i></button>
                 </div>
@@ -13337,6 +13346,13 @@ const cv = makeProceduralElevationCanvas();
         btnCollapseSide.addEventListener('click', () => { setCollapsed(settingsPanel, !settingsPanel.classList.contains('collapsed')); });
         btnCollapseSearch.addEventListener('click', () => { setCollapsed(searchPanel, !searchPanel.classList.contains('collapsed')); });
         btnCollapseOverlay.addEventListener('click', () => { setCollapsed(overlayPanel, !overlayPanel.classList.contains('collapsed')); });
+        // 欄位主題字（含圖示）也可點擊收放：手機上按鈕太小，直接點「顯示設定」等標題更順手。
+        document.querySelectorAll('.panel-title').forEach((el) => {
+            el.addEventListener('click', () => {
+                const panel = el.closest('.ui-panel');
+                if (panel) setCollapsed(panel, !panel.classList.contains('collapsed'));
+            });
+        });
 
         // 窄視窗自動收起：只在視窗寬度 <= COMPACT_W 時把四面板全收起，避免月面
         // 被蓋住。縮放程度不再觸發收放——如果視窗一開始就夠寬、兩側欄位維持展開，
