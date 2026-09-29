@@ -13044,20 +13044,60 @@ const cv = makeProceduralElevationCanvas();
         btnCollapseSearch.addEventListener('click', () => { setCollapsed(searchPanel, !searchPanel.classList.contains('collapsed')); });
         btnCollapseOverlay.addEventListener('click', () => { setCollapsed(overlayPanel, !overlayPanel.classList.contains('collapsed')); });
 
-        // 手機 / 窄視窗（<=640px）：四個面板會佔滿整個畫面蓋住月球，
-        // 載入時自動全部收起成標題列，讓月面第一時間可見；點標題的
-        // 收起/展開鈕即可再展開個別面板。只在進入/離開該寬度時套用一次，
-        // 之後保持使用者手動的展開狀態，不會在每次 resize 時反覆收放。
+        // 手機 / 窄視窗自動收起：觸發條件有二，取其一即收起。
+        //  1) COMPACT_W 以下（<=640px）：四個面板全寬堆疊，月面上下都被蓋住。
+        //  2) 兩側欄位對中央月亮的遮擋超過 OCCLUDE_FRACTION（預設 30%）：
+        //     把月球目前的畫面寬度（隨縮放而變）與「面板展開後」左右內緣
+        //     之間的縫隙相比——縫隙不足以露出超過 70% 的月面寬度，就代表
+        //     瀏覽器太窄，先收起兩側欄位。
+        // 只在遮擋狀態「跨越門檻」時收放一次（autoCollapsed 記錄目前是否
+        // 由本邏輯收起），之後即使 resize 也不會跟使用者手動的收放打架。
         const COMPACT_W = 640;
-        let prevCompact = null;
+        const OCCLUDE_FRACTION = 0.30;
+        const OCCLUDE_PANELS = ['main-panel', 'overlay-panel', 'settings-panel', 'search-panel'];
+        let autoCollapsed = false;
+        function moonOcclusionRatio() {
+            const cn = container.getBoundingClientRect();
+            if (cn.width < 1 || cn.height < 1) return 0;
+            scene.updateMatrixWorld(true);
+            camera.updateProjectionMatrix();
+            camera.updateMatrixWorld(true);
+            const c = new THREE.Vector3();
+            moon.getWorldPosition(c);
+            const rightV = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0).normalize();
+            const e = c.clone().addScaledVector(rightV, moonRadius);
+            const pc = c.clone().project(camera);
+            const pe = e.clone().project(camera);
+            if (pc.z > 1 || pc.z < -1 || pe.z > 1 || pe.z < -1) return 0;
+            const toX = (x) => (x + 1) * 0.5 * cn.width + cn.left;
+            const cx = toX(pc.x);
+            const radiusPx = Math.abs(toX(pe.x) - cx);
+            const moonWidth = Math.max(1, radiusPx * 2);
+            // 面板的水平內緣：取「最靠近中央」的左右邊界當作露出區域。
+            // 收起的面板寬度不變、水平範圍不變，量到的仍是面板展開時的佔位，
+            // 因此不會因自己剛收起而誤判成「沒遮擋」而立刻又展開（防來回閃動）。
+            let occlL = cn.left, occlR = cn.left + cn.width;
+            const centerX = cn.left + cn.width / 2;
+            OCCLUDE_PANELS.forEach((id) => {
+                const p = document.getElementById(id);
+                if (!p) return;
+                const r = p.getBoundingClientRect();
+                if (r.width < 1) return;
+                if (r.right <= centerX) occlL = Math.max(occlL, r.right);
+                else if (r.left >= centerX) occlR = Math.min(occlR, r.left);
+                else { occlL = Math.max(occlL, r.left); occlR = Math.min(occlR, r.right); }
+            });
+            const visible = Math.max(0, Math.min(cx + radiusPx, occlR) - Math.max(cx - radiusPx, occlL));
+            return Math.min(1, 1 - visible / moonWidth);
+        }
         function applyResponsiveCollapse() {
-            const compact = window.innerWidth <= COMPACT_W;
-            if (prevCompact === compact) return;
-            prevCompact = compact;
-            setCollapsed(mainPanel, compact);
-            setCollapsed(overlayPanel, compact);
-            setCollapsed(settingsPanel, compact);
-            setCollapsed(searchPanel, compact);
+            const want = window.innerWidth <= COMPACT_W || moonOcclusionRatio() > OCCLUDE_FRACTION;
+            if (want === autoCollapsed) return;
+            autoCollapsed = want;
+            setCollapsed(mainPanel, want);
+            setCollapsed(overlayPanel, want);
+            setCollapsed(settingsPanel, want);
+            setCollapsed(searchPanel, want);
         }
         applyResponsiveCollapse();
         window.addEventListener('resize', applyResponsiveCollapse, false);
