@@ -491,6 +491,19 @@
                         <input type="range" id="relief-slider" min="0" max="5" step="0.1" value="1" class="w-20">
                     </div>
 
+                    <div class="flex items-center justify-between gap-3" title="依裝置效能自動選用紋理與地形解析度；手動選擇會立即重新整理生效">
+                        <span class="text-[13px] text-gray-300 whitespace-nowrap">效能品質</span>
+                        <div class="flex items-center gap-2">
+                            <span id="perf-tier" class="text-[11px] text-emerald-400"></span>
+                            <select id="perf-quality" class="bg-gray-800 border border-gray-600 rounded px-1.5 py-1 text-[11px] text-white focus:outline-none focus:border-blue-500">
+                                <option value="auto">自動</option>
+                                <option value="high">高品質</option>
+                                <option value="mid">中品質</option>
+                                <option value="low">低品質</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="border-t border-slate-700 pt-2 mt-1">
                         <p class="text-[11px] text-gray-400 mb-1.5"><i class="fa-solid fa-binoculars mr-1"></i>月球視野（旋轉 / 翻轉）</p>
                         <div class="flex items-center justify-between gap-3" title="視野旋轉角：純影像旋轉（直接使用此參數），不改變月球相對地球的姿態，所以位置角 P、天平動等真實資料不受影響。">
@@ -9871,6 +9884,7 @@
             searchQuery: '',
             typeFilter: 'all',
             reliefScale: 1,
+            quality: (function () { try { return localStorage.getItem('moonterrain.quality') || 'auto'; } catch (e) { return 'auto'; } })(),
             showSurface: true,        // show/hide the moon surface mesh
             showLatLngGrid: false,    // show/hide the selenographic graticule
             overlayScale: 0.5,         // photo overlay size multiplier (1 = fills the window; 0.5 = half size)
@@ -10638,8 +10652,6 @@
         // 6. Three.js Setup
         // =====================================================================
         const isMobile = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768;
-        // Dense mesh + smooth-shaded relief: keeps magnified terrain from looking faceted/blocky.
-        const segments = isMobile ? 256 : 512;
 
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
@@ -10656,7 +10668,6 @@
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         container.appendChild(renderer.domElement);
         const maxAniso = (renderer.capabilities && renderer.capabilities.getMaxAnisotropy) ? renderer.capabilities.getMaxAnisotropy() : 8;
 
@@ -10667,10 +10678,41 @@
         const outlineLayerEl = document.getElementById('outline-layer');
         const outlineRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         outlineRenderer.setSize(window.innerWidth, window.innerHeight);
-        outlineRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         outlineRenderer.setClearColor(0x000000, 0);
         outlineLayerEl.appendChild(outlineRenderer.domElement);
         outlineRenderer.domElement.style.display = 'block';
+
+        // ---- 效能品質分級：依裝置效能自動選擇資料解析度（可在顯示設定手動改） ----
+        // 好機器：8K 網紋、4096 LOLA 地形、高密度網格、裝置像素比 2；
+        // 差機器：1-2K 網紋、1024-2048 地形、低密度網格、裝置像素比 1，
+        // 換取下載量、解碼成本與每幀填充率的大幅下降，低畫質仍保有完整月相功能。
+        // 手動選擇會存進 localStorage（state.quality），下次載入即套用該分級。
+        const gpuMaxTex = (renderer.capabilities && renderer.capabilities.maxTextureSize) || 4096;
+        function detectPerfTier() {
+            const mem = navigator.deviceMemory || 4;              // GB（目前僅 Chrome 提供）
+            const cores = navigator.hardwareConcurrency || 4;     // 邏輯核心數
+            let score = 0;
+            if (mem >= 8) score += 2; else if (mem >= 4) score += 1;
+            if (cores >= 8) score += 2; else if (cores >= 4) score += 1;
+            if (gpuMaxTex >= 8192) score += 1;
+            if (isMobile) score -= 1;
+            return score <= 2 ? 'low' : (score <= 4 ? 'mid' : 'high');
+        }
+        const perf = { autoTier: detectPerfTier() };
+        perf.tier = (state.quality && state.quality !== 'auto') ? state.quality : perf.autoTier;
+        const PERF = {
+            high: { color: () => Math.min(gpuMaxTex, isMobile ? 4096 : 8192), segments: () => (isMobile ? 256 : 512), disp: 4096, pr: 2, tag: '8K' },
+            mid:  { color: () => Math.min(gpuMaxTex, isMobile ? 2048 : 4096), segments: () => (isMobile ? 128 : 256), disp: 2048, pr: 1.5, tag: '4K' },
+            low:  { color: () => (isMobile ? 1024 : 2048), segments: () => (isMobile ? 96 : 128), disp: 1024, pr: 1, tag: '1-2K' }
+        };
+        const perfCfg = () => PERF[perf.tier] || PERF.high;
+        // Dense mesh + smooth-shaded relief: keeps magnified terrain from looking faceted/blocky.
+        const segments = perfCfg().segments();
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, perfCfg().pr));
+        outlineRenderer.setPixelRatio(Math.min(window.devicePixelRatio, perfCfg().pr));
+        console.log('[moon] perf tier = ' + perf.tier + ' (' + perfCfg().tag + '), segments ' + segments + ', pixel ratio cap ' + perfCfg().pr);
+        // 低解析分級下，proxied 的 hiRes 圖寬較小；用分級門檻判斷「夠清晰」而採用。
+        const colorOkMin = () => (perf.tier === 'low' ? (isMobile ? 768 : 1536) : (isMobile ? 2048 : 3072));
 
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableRotate = false;   // observation angle is set only by the observer's location
@@ -10727,12 +10769,14 @@
         // 2K JPEG / 16-bit TIFF, so the SSS mosaic is our sharpest public CORS-able source.
         const svcBase = 'https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/';
         const proxied = (u, w, h, extra) => 'https://images.weserv.nl/?url=' + encodeURIComponent(u) + (w ? ('&w=' + w + (h ? '&h=' + h : '')) : '') + (extra || '');
-        // 8K whenever the GPU can swallow it (maxTextureSize >= 8192), 4K otherwise.
-        const gpuMaxTex = (renderer.capabilities && renderer.capabilities.maxTextureSize) || 4096;
-        const hiTarget = Math.min(gpuMaxTex, isMobile ? 4096 : 8192);
+        // 紋理目標解析度由上方效能分級決定（PERF 表格），不再單純依 GPU 上限。
+        const useLocalColor = perfCfg().color() >= 4096;   // 目標 ≥ 4K 時優先讀本機 Stellarium 4K
+        const useLocalDisp  = perfCfg().disp >= 4096;      // 4096 LOLA 地形只保留給高階裝置
+        const hiTarget = perfCfg().color();
         const hiResColorUrl = proxied('https://www.solarsystemscope.com/textures/download/8k_moon.jpg', hiTarget, hiTarget / 2, '&q=95');
         const colorMapUrl = proxied(svcBase + 'lroc_color_2k.jpg', 2048, 1024);
-        const displacementMapUrl = proxied(svcBase + 'ldem_3_8bit.jpg', 4096, 2048, '&q=90&fit=inside&blur=0.6');
+        const dispW = perfCfg().disp;
+        const displacementMapUrl = proxied(svcBase + 'ldem_3_8bit.jpg', dispW, Math.round(dispW / 2), '&q=90&fit=inside&blur=0.6');
         const fallbackColorUrl = 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/moon_1024.jpg';
 
         // ---- Stellarium-shipped textures (copied from C:\Program Files\Stellarium\textures) ----
@@ -10985,7 +11029,7 @@
             };
             const applyBest = () => {
                 if (colorDone) return;
-                if (hiTex && hiTex.image && (hiTex.image.width >= 3072 || isMobile)) {
+                if (hiTex && hiTex.image && (hiTex.image.width >= colorOkMin())) {
                     setColorMap(hiTex); resolveColor(hiTex);
                 } else if (twoTex) resolveColor(twoTex);
                 else if (!fallbackLoading) {
@@ -10994,13 +11038,14 @@
                 }
             };
             let fallbackLoading = false;
-            // Local Stellarium 4K first (instant, no network); only if the GPU can swallow 4096px.
-            if (gpuMaxTex >= 4096) {
+            // Local Stellarium 4K first (instant, no network); used only when the tier target
+            // is at least 4K (perfCfg().color() >= 4096), otherwise the proxied size wins.
+            if (useLocalColor) {
                 textureLoader.load(localColorUrl, function (tex) {
                     if (!tex || !tex.image) { applyBest(); return; }
                     if (colorDone) {
                         // Local 4K landed after a standby map already appeared: hot-swap for detail.
-                        if (tex.image.width >= (isMobile ? 2048 : 3072)) {
+                        if (tex.image.width >= colorOkMin()) {
                             tex.anisotropy = maxAniso;
                             tex.minFilter = THREE.LinearMipmapLinearFilter;
                             tex.magFilter = THREE.LinearFilter;
@@ -11020,7 +11065,7 @@
                 hiTex = tex;
                 if (colorDone) {
                     // Full-res arrived after a standby map already appeared: hot-swap for extra detail.
-                    if (tex && tex.image && tex.image.width >= (isMobile ? 2048 : 3072)) {
+                    if (tex && tex.image && tex.image.width >= colorOkMin()) {
                         tex.anisotropy = maxAniso;
                         tex.minFilter = THREE.LinearMipmapLinearFilter;
                         tex.magFilter = THREE.LinearFilter;
@@ -11076,15 +11121,23 @@ const cv = makeProceduralElevationCanvas();
                 refreshLabelAnchors();
                 slotDone('elev');
             };
-            // Local real-LOLA 5760x2880-derived map first (resampled to 4096x2048): 4x the old
-            // 1024 source, so the limb / silhouette relief finally gets real high-freq detail.
-            textureLoader.load(localDisplacementUrl, function (tex) {
-                console.log('[moon] 4096 LOLA displacement active (converted from ldem_16_uint.tif)');
-                applyTerrain(tex);
-            }, undefined, function () {
-                // fallback chain: resampled remote 8-bit LOLA -> procedural canvas
+            // LOLA 地形來源也依效能分級：
+            //   高階（disp=4096）：先用本機 4096x2048（由 ldem_16_uint.tif 轉出），
+            //     放大時月底/剪影才有真正的細節，失敗再退回縮小的遠端 8-bit LOLA；
+            //   中/低階：直接抓 disp 尺寸（2048 / 1024）的遠端資料，省下載與解碼成本。
+            const loadRemoteDisp = () => {
                 textureLoader.load(displacementMapUrl, applyTerrain, (e) => onSlotProgress('elev', e), function () { applyProc(); });
-            });
+            };
+            if (useLocalDisp) {
+                textureLoader.load(localDisplacementUrl, function (tex) {
+                    console.log('[moon] 4096 LOLA displacement active (converted from ldem_16_uint.tif)');
+                    applyTerrain(tex);
+                }, undefined, function () {
+                    loadRemoteDisp();
+                });
+            } else {
+                loadRemoteDisp();
+            }
         }
         loadColorTexture();
         loadElevationTexture();
@@ -12541,6 +12594,11 @@ const cv = makeProceduralElevationCanvas();
             '顯示設定': 'Display settings',
             '語言': 'Language',
             '地形顯示': 'Terrain display',
+'效能品質': 'Performance quality',
+'自動': 'Auto',
+'高品質': 'High quality',
+'中品質': 'Medium quality',
+'低品質': 'Low quality',
             '名稱': 'Names',
             '外框': 'Outlines',
             '地形名稱': 'Feature names',
@@ -12599,7 +12657,9 @@ const cv = makeProceduralElevationCanvas();
             '視野旋轉角：純影像旋轉（直接使用此參數），不改變月球相對地球的姿態，所以位置角 P、天平動等真實資料不受影響。':
                 'Field rotation angle: a pure image rotation (this parameter is used directly). It does not change the Moon\'s attitude relative to Earth, so real data such as position angle P and libration are unaffected.',
             '月面 selenographic 經緯線：緯度圈與經度輻射線，跟隨月體一起旋轉（受觀測者視差與平衡動影響）':
-                'Selenographic graticule on the lunar surface: latitude circles and radiating longitude lines, rotating with the Moon (affected by the observer\'s parallax and libration).'
+                'Selenographic graticule on the lunar surface: latitude circles and radiating longitude lines, rotating with the Moon (affected by the observer\'s parallax and libration).',
+            '依裝置效能自動選用紋理與地形解析度；手動選擇會立即重新整理生效':
+                'Texture/terrain resolution follows device performance automatically; choosing manually reloads the page to apply it.'
         };
 
         const I18N_DOC = {
@@ -12702,6 +12762,7 @@ const cv = makeProceduralElevationCanvas();
             state.lang = lang;
             applyI18n();
             updateCredit();
+            updatePerfTierLabel();
             refreshObservationInfo();
             renderTypeChips();
             renderFeatureList();
@@ -13050,6 +13111,28 @@ const cv = makeProceduralElevationCanvas();
             if (reliefValue) reliefValue.textContent = s.toFixed(1);
             setReliefScale(s);
         });
+
+        function updatePerfTierLabel() {
+            const el = document.getElementById('perf-tier');
+            if (!el) return;
+            const t = perf.tier === 'high' ? (state.lang === 'tw' ? '高' : 'Hi')
+                : perf.tier === 'mid' ? (state.lang === 'tw' ? '中' : 'Med')
+                : (state.lang === 'tw' ? '低' : 'Lo');
+            const tag = perfCfg().tag;
+            el.textContent = (state.quality === 'auto'
+                ? (state.lang === 'tw' ? '自動：' : 'Auto: ')
+                : (state.lang === 'tw' ? '手動：' : 'Manual: ')) + t + ' ' + tag;
+        }
+        const perfQuality = document.getElementById('perf-quality');
+        if (perfQuality) {
+            perfQuality.value = state.quality;
+            perfQuality.addEventListener('change', (e) => {
+                state.quality = e.target.value;
+                try { localStorage.setItem('moonterrain.quality', state.quality); } catch (err) { /* private mode */ }
+                location.reload();
+            });
+        }
+        updatePerfTierLabel();
 
         searchInput.addEventListener('input', (e) => { state.searchQuery = e.target.value; renderFeatureList(); });
 
