@@ -297,8 +297,12 @@
 
         /* Side panels (settings + search): a second stacked column next to the left one.
            Both columns always stay as themselves — they never collapse into a menu
-           icon/drawer; on narrower windows they just shrink normally (two columns at
-           50% each on tablets/narrow windows, then stack full-width on phones). */
+           icon/drawer, and they are NEVER dissolved into a 2×2 grid: a grid row is as
+           tall as its tallest panel, which pushed 照片疊圖 down (or left it holding the
+           old height) whenever 顯示設定 / 查詢地形特徵 were expanded. Keeping two plain
+           flow columns preserves the invariant that 照片疊圖 always sits directly below
+           月球觀測儀, whatever the other two panels are doing. The columns just get
+           narrower / stack full-width on small screens. */
         #side-panels { display: flex; flex-direction: column; gap: 10px; max-height: calc(100vh - 24px); }
         #side-panels > .ui-panel { width: 100%; }
         #side-panels.panel-scroll { overflow-y: auto; }
@@ -306,25 +310,9 @@
             #left-panels, #side-panels { width: 320px; }
         }
         @media (min-width: 640px) and (max-width: 1023px) {
-            /* The four panels form one 2×2 field when the window is narrow: 顯示設定
-               stretches to 月球觀測儀's height and 查詢地形特徵 to 照片疊圖's height
-               (same height per grid row), instead of each panel keeping its own size.
-               The two columns become transparent (display: contents) so the four
-               panels are placed directly onto the grid. */
-            #ui-container .panels-layout {
-                display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto;
-                gap: 10px; max-height: calc(100vh - 16px); overflow-y: auto;
-                pointer-events: auto; scrollbar-width: thin; scrollbar-color: #64748b transparent;
-            }
-            #left-panels, #side-panels { display: contents; }
-            #main-panel { grid-column: 1; grid-row: 1; }
-            #settings-panel { grid-column: 2; grid-row: 1; }
-            #overlay-panel { grid-column: 1; grid-row: 2; }
-            #search-panel { grid-column: 2; grid-row: 2; }
-            #main-panel, #settings-panel, #overlay-panel, #search-panel { min-width: 0; }
-            /* 低效能模式隱藏照片疊圖後，查詢面板承接左下格位。 */
-            body.lowPerf #search-panel { grid-column: 1; grid-row: 2; }
-            #search-panel { max-height: none !important; }
+            /* Narrow window: keep the two columns but trim them so the Moon keeps a
+               usable gap in the middle (320 + 320 would leave nothing). */
+            #left-panels, #side-panels { width: 268px; }
         }
         @media (max-width: 639px) {
             #left-panels, #side-panels { width: 100%; }
@@ -13362,12 +13350,15 @@ const cv = makeProceduralElevationCanvas();
             });
         });
 
-        // 窄視窗自動收起：只在視窗寬度 <= COMPACT_W 時把四面板全收起，避免月面
-        // 被蓋住。縮放程度不再觸發收放——如果視窗一開始就夠寬、兩側欄位維持展開，
-        // 那麼之後放大月球時欄位也會繼續展開，不會在調整視野的途中突然消失。
-        // 只在收放狀態「跨越門檻」時動作一次（autoCollapsed 記錄目前是否由本邏輯
-        // 收起），之後即使 resize 也不會與使用者的手動收放打架。
-        const COMPACT_W = 640;
+// 窄視窗自動收起：視窗寬度 <= COMPACT_W 時把四面板全收起，避免月面被蓋住。
+// COMPACT_W 與 CSS 的窄欄切點一致（1023px）：1024px 以上兩欄各 320px，月面在中間
+// 仍有足夠空間；1023px 以下欄位較窄、月面只剩中間一小塊，所以預設收成細欄，
+// 使用者點欄位標題再逐一展開。
+// 縮放程度不觸發收放——如果視窗一開始就夠寬、兩側欄位維持展開，那麼之後放大月球時
+// 欄位也會繼續展開，不會在調整視野的途中突然消失。
+// 只在收放狀態「跨越門檻」時動作一次（autoCollapsed 記錄目前是否由本邏輯
+// 收起），之後即使 resize 也不會與使用者的手動收放打架。
+const COMPACT_W = 1023;
         let autoCollapsed = false;
         function applyResponsiveCollapse() {
             const want = window.innerWidth <= COMPACT_W;
