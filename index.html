@@ -474,10 +474,19 @@
             <div id="settings-body" class="space-y-2.5">
                     <div class="flex items-center justify-between gap-3">
                         <span class="text-[13px] text-gray-300">語言</span>
-                        <div class="flex rounded-md shadow-sm" role="group">
-                            <button type="button" id="lang-tw" class="px-3 py-1 text-[12px] font-medium bg-blue-600 text-white rounded-l-lg hover:bg-blue-700">中文</button>
-                            <button type="button" id="lang-en" class="px-3 py-1 text-[12px] font-medium bg-gray-700 text-gray-300 rounded-r-lg border-l border-gray-600 hover:bg-gray-600">EN</button>
-                        </div>
+                        <select id="lang-select" class="bg-gray-800 border border-gray-600 rounded px-1.5 py-1 text-[12px] text-white focus:outline-none focus:border-blue-500">
+                            <option value="tw">繁體中文</option>
+                            <option value="en">English</option>
+                            <option value="ja">日本語</option>
+                            <option value="ko">한국어</option>
+                            <option value="es">Español</option>
+                            <option value="pt">Português</option>
+                            <option value="fr">Français</option>
+                            <option value="de">Deutsch</option>
+                            <option value="cs">Čeština</option>
+                            <option value="pl">Polski</option>
+                            <option value="it">Italiano</option>
+                        </select>
                     </div>
 
                     <div class="flex items-center justify-between gap-3" title="效能模式：精簡版使用輕量正面月球（無立體地形、無照片疊圖、無自由視角）；完整版保留完整 3D 功能。切換後重新整理立即生效。">
@@ -714,23 +723,46 @@
         // Lat: North +, South - | Lon: East +, West - (IAU coordinates)
         // =====================================================================
                 const TYPE_INFO = {
-            Albedo:  { tw: '反照率斑', en: 'Albedo', color: '#c084fc' },
-            Catena:  { tw: '鏈狀坑', en: 'Catena', color: '#84cc16' },
-            Crater:  { tw: '隕石坑', en: 'Crater', color: '#f59e0b' },
-            Dorsum:  { tw: '月脊', en: 'Dorsum', color: '#f97316' },
-            Lacus:  { tw: '月湖', en: 'Lacus', color: '#38bdf8' },
-            Mare:  { tw: '月海', en: 'Mare', color: '#3b82f6' },
-            Mons:  { tw: '山脈', en: 'Mons / Montes', color: '#f87171' },
-            Oceanus:  { tw: '月洋', en: 'Oceanus', color: '#1d4ed8' },
-            Palus:  { tw: '月沼', en: 'Palus', color: '#67e8f9' },
-            Planitia:  { tw: '月平原', en: 'Planitia', color: '#93c5fd' },
-            Promontorium:  { tw: '岬角', en: 'Promontorium', color: '#fb923c' },
-            Rima:  { tw: '月溝', en: 'Rima / Rimae', color: '#14b8a6' },
-            Rupes:  { tw: '峭壁', en: 'Rupes', color: '#f472b6' },
-            Sinus:  { tw: '月灣', en: 'Sinus', color: '#22d3ee' },
-            Statio:  { tw: '登陸點', en: 'Statio', color: '#eab308' },
-            Vallis:  { tw: '月谷', en: 'Vallis', color: '#a855f7' },
+            // n = 類型名稱的九種語言（英、繁中直接看 en / tw 欄位）
+            Albedo:  { tw: '反照率斑', en: 'Albedo', n: { ja: '反照率模様', ko: '반사율 무늬', es: 'Mancha de albedo', pt: 'Mancha de albedo', fr: 'Tache d’albedo', de: 'Albedo-Fleck', cs: 'Skvrna albedo', pl: 'Plama albedo', it: 'Macchia di albedo' }, color: '#c084fc' },
+            Catena:  { tw: '鏈狀坑', en: 'Catena', n: { ja: 'カテナ（連鎖クレーター）', ko: '사슬 분화구', es: 'Cadena de cráteres', pt: 'Cadeia de crateras', fr: 'Chaîne de cratères', de: 'Kraterkette', cs: 'Řetězec kráterů', pl: 'Łańcuch kraterów', it: 'Catena di crateri' }, color: '#84cc16' },
+            Crater:  { tw: '隕石坑', en: 'Crater', n: { ja: 'クレーター', ko: '분화구', es: 'Cráter', pt: 'Cratera', fr: 'Cratère', de: 'Krater', cs: 'Kráter', pl: 'Krater', it: 'Cratere' }, color: '#f59e0b' },
+            Dorsum:  { tw: '月脊', en: 'Dorsum', n: { ja: 'ドルスム（背稜）', ko: '능선', es: 'Dorsal', pt: 'Dorsal', fr: 'Dorsale', de: 'Dorsum', cs: 'Hřbet', pl: 'Grzbiet', it: 'Dorsale' }, color: '#f97316' },
+            Lacus:   { tw: '月湖', en: 'Lacus', n: { ja: '湖', ko: '호수', es: 'Lacus', pt: 'Lago', fr: 'Lacus', de: 'Lacus', cs: 'Jezero', pl: 'Jezioro', it: 'Lago' }, color: '#38bdf8' },
+            Mare:    { tw: '月海', en: 'Mare', n: { ja: '海', ko: '바다', es: 'Mare', pt: 'Mar', fr: 'Mare', de: 'Mare', cs: 'Moře', pl: 'Morze', it: 'Mare' }, color: '#3b82f6' },
+            Mons:    { tw: '山脈', en: 'Mons / Montes', n: { ja: '山脈', ko: '산맥', es: 'Montes', pt: 'Montes', fr: 'Montes', de: 'Montes', cs: 'Hory', pl: 'Góry', it: 'Monti' }, color: '#f87171' },
+            Oceanus: { tw: '月洋', en: 'Oceanus', n: { ja: '洋', ko: '대양', es: 'Océano', pt: 'Oceano', fr: 'Océan', de: 'Ozean', cs: 'Oceán', pl: 'Ocean', it: 'Oceano' }, color: '#1d4ed8' },
+            Palus:   { tw: '月沼', en: 'Palus', n: { ja: '沼', ko: '늪', es: 'Palus', pt: 'Pântano', fr: 'Palus', de: 'Palus', cs: 'Bažina', pl: 'Bagna', it: 'Palude' }, color: '#67e8f9' },
+            Planitia:{ tw: '月平原', en: 'Planitia', n: { ja: '平原', ko: '평원', es: 'Planitia', pt: 'Planície', fr: 'Planitia', de: 'Planitia', cs: 'Rovina', pl: 'Równina', it: 'Piana' }, color: '#93c5fd' },
+            Promontorium: { tw: '岬角', en: 'Promontorium', n: { ja: '岬', ko: '곶', es: 'Promontorio', pt: 'Promontório', fr: 'Promontoire', de: 'Vorgebirge', cs: 'Mys', pl: 'Przylądek', it: 'Promontorio' }, color: '#fb923c' },
+            Rima:    { tw: '月溝', en: 'Rima / Rimae', n: { ja: 'リマ（裂溝）', ko: '균열', es: 'Grieta', pt: 'Fenda', fr: 'Fente', de: 'Rille', cs: 'Příkop', pl: 'Rynna', it: 'Fessura' }, color: '#14b8a6' },
+            Rupes:   { tw: '峭壁', en: 'Rupes', n: { ja: '岩壁', ko: '절벽', es: 'Escarpa', pt: 'Escarpa', fr: 'Escarpement', de: 'Steilhang', cs: 'Sráz', pl: 'Urwisko', it: 'Rupe' }, color: '#f472b6' },
+            Sinus:   { tw: '月灣', en: 'Sinus', n: { ja: '湾', ko: '만', es: 'Sinus', pt: 'Baía', fr: 'Sinus', de: 'Bucht', cs: 'Zátoka', pl: 'Zatoka', it: 'Seno' }, color: '#22d3ee' },
+            Statio:  { tw: '登陸點', en: 'Statio', n: { ja: '着陸地点', ko: '착륙장', es: 'Estación', pt: 'Estação', fr: 'Station', de: 'Station', cs: 'Stanoviště', pl: 'Lądowisko', it: 'Stazione' }, color: '#eab308' },
+            Vallis:  { tw: '月谷', en: 'Vallis', n: { ja: '谷', ko: '계곡', es: 'Valle', pt: 'Vale', fr: 'Vallée', de: 'Tal', cs: 'Údolí', pl: 'Dolina', it: 'Valle' }, color: '#a855f7' }
         };
+
+        // 目前語言的地形類型名稱：繁中看 tw、英文看 en，其餘查 n。
+        function typeLabel(info) {
+            if (state.lang === 'tw') return info.tw;
+            const n = info.n;
+            if (n && n[state.lang]) return n[state.lang];
+            return info.en;
+        }
+
+        // 地形專有名詞：歐洲各語沿用 IAU 拉丁文原名（那正是該語言的慣例），
+        // 日、韓查 FEATURE_L10N 的慣用寫法，查不到一律退回 IAU 原名。
+        // 待辦：日／韓的 76 個精選特徵與 49 個登陸點譯名（先維持拉丁原名）。
+        const FEATURE_L10N = {};
+        function featureLabel(f) {
+            const lang = state.lang;
+            if (lang === 'tw') return f.tw;
+            if (lang === 'ja' || lang === 'ko') {
+                const n = FEATURE_L10N[f.id];
+                if (n && n[lang]) return n[lang];
+            }
+            return f.en;
+        }
 
                 const lunarFeatures = [
             { id: 'mare_crisium', lat: 17, lon: 59.1, en: 'Mare Crisium', tw: '危難海', type: 'Mare', level: 1, d: 555.9, box: [9.69, 24.53, 49.51, 68.53] },
@@ -9925,12 +9957,18 @@
                 return false;
             } catch (e) { return false; }
         })();
-        // 依瀏覽器語言自動選擇介面語言：中文環境（zh-*）用繁體中文，其他語言用英文。
+        // 介面支援的語言代碼（下拉選單順序）。state.lang 只會是其中之一。
+        const LOCALES = ['tw', 'en', 'ja', 'ko', 'es', 'pt', 'fr', 'de', 'cs', 'pl', 'it'];
+        // 依瀏覽器語言自動選擇介面語言：中文環境（zh-*）用繁體中文，其餘依主語言代碼對應。
         const DETECTED_LANG = (function () {
             try {
                 const langs = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language];
-                const primary = String(langs[0] || 'en').toLowerCase();
-                return primary.startsWith('zh') ? 'tw' : 'en';
+                for (const raw of langs) {
+                    const base = String(raw || '').toLowerCase().split('-')[0];
+                    if (base === 'zh') return 'tw';
+                    if (LOCALES.indexOf(base) !== -1) return base;
+                }
+                return 'en';
             } catch (e) { return 'en'; }
         })();
         const state = {
@@ -10431,14 +10469,14 @@
         }
 
         function getPhaseName(p) {
-            if (p < 0.02 || p >= 0.98) return state.lang === 'tw' ? '朔月（新月）' : 'New Moon';
-            if (p < 0.23) return state.lang === 'tw' ? '眉月（娥眉月）' : 'Waxing Crescent';
-            if (p < 0.27) return state.lang === 'tw' ? '上弦月' : 'First Quarter';
-            if (p < 0.48) return state.lang === 'tw' ? '盈凸月' : 'Waxing Gibbous';
-            if (p < 0.52) return state.lang === 'tw' ? '滿月（望）' : 'Full Moon';
-            if (p < 0.73) return state.lang === 'tw' ? '虧凸月' : 'Waning Gibbous';
-            if (p < 0.77) return state.lang === 'tw' ? '下弦月' : 'Last Quarter';
-            return state.lang === 'tw' ? '殘月' : 'Waning Crescent';
+            if (p < 0.02 || p >= 0.98) return T('朔月（新月）', 'New Moon');
+            if (p < 0.23) return T('眉月（娥眉月）', 'Waxing Crescent');
+            if (p < 0.27) return T('上弦月', 'First Quarter');
+            if (p < 0.48) return T('盈凸月', 'Waxing Gibbous');
+            if (p < 0.52) return T('滿月（望）', 'Full Moon');
+            if (p < 0.73) return T('虧凸月', 'Waning Gibbous');
+            if (p < 0.77) return T('下弦月', 'Last Quarter');
+            return T('殘月', 'Waning Crescent');
         }
 
         // =====================================================================
@@ -10450,8 +10488,7 @@
         const phaseNameEl = document.getElementById('phase-name-text');
         const phaseModeNote = document.getElementById('phase-mode-note');
         const moonAgeEl = document.getElementById('moon-age');
-        const langTwBtn = document.getElementById('lang-tw');
-        const langEnBtn = document.getElementById('lang-en');
+        const langSelect = document.getElementById('lang-select');
         const perfModeSel = document.getElementById('perf-mode');
         const modeAutoNote = document.getElementById('mode-auto-note');
         const toggleBrightLabels = document.getElementById('toggle-bright-labels');
@@ -10620,7 +10657,7 @@
             moonAgeEl.textContent = age.toFixed(2);
             phaseModeNote.classList.toggle('hidden', !state.manualPhase);
 
-            document.getElementById('info-age').textContent = age.toFixed(2) + (state.lang === 'en' ? ' days' : ' 天');
+            document.getElementById('info-age').textContent = age.toFixed(2) + T(' 天', ' days');
             document.getElementById('info-illum').textContent = illum.toFixed(1) + ' %';
             // Angular diameter: arcminutes (the astronomer's unit) plus the degree value
             // in parentheses, since 0.27° is easier to grasp than 16.4'.
@@ -10631,16 +10668,10 @@
             // (polar day/night), which fmtMoonTime already handles.
             document.getElementById('info-moonrise-set').textContent =
                 fmtMoonTime(rs.rise) + ' / ' + fmtMoonTime(rs.set);
-            document.getElementById('info-nextnew').textContent = ((1 - p) * SYNODIC_MONTH).toFixed(2) + (state.lang === 'en' ? ' days' : ' 天後');
+            document.getElementById('info-nextnew').textContent = ((1 - p) * SYNODIC_MONTH).toFixed(2) + T(' 天後', ' days');
 
-            // Language buttons styling
-            if (state.lang === 'tw') {
-                langTwBtn.classList.add('bg-blue-600', 'text-white'); langTwBtn.classList.remove('bg-gray-700', 'text-gray-300');
-                langEnBtn.classList.add('bg-gray-700', 'text-gray-300'); langEnBtn.classList.remove('bg-blue-600', 'text-white');
-            } else {
-                langEnBtn.classList.add('bg-blue-600', 'text-white'); langEnBtn.classList.remove('bg-gray-700', 'text-gray-300');
-                langTwBtn.classList.add('bg-gray-700', 'text-gray-300'); langTwBtn.classList.remove('bg-blue-600', 'text-white');
-            }
+            // Language selector sync
+            if (langSelect && langSelect.value !== state.lang) langSelect.value = state.lang;
         }
 
         function updateLibrationInfo(lib) {
@@ -11085,13 +11116,13 @@
             if (loadBar) loadBar.style.width = pct + '%';
             if (loadStatus) {
                 const parts = [];
-                if (!resolvedSlots.color) parts.push(state.lang === 'tw' ? '月面影像' : 'surface imagery');
-                if (!resolvedSlots.elev) parts.push(state.lang === 'tw' ? '地形資料' : 'terrain data');
+                if (!resolvedSlots.color) parts.push(T('月面影像', 'surface imagery'));
+                if (!resolvedSlots.elev) parts.push(T('地形資料', 'terrain data'));
                 const lead = parts.length
                     ? (parts.length === 2
-                        ? (state.lang === 'tw' ? '下載中 月面影像與地形資料⋯' : 'Downloading surface imagery & terrain data…')
-                        : (state.lang === 'tw' ? '下載中 ' + parts[0] + '⋯' : 'Downloading ' + parts[0] + '…'))
-                    : (state.lang === 'tw' ? '完成' : 'Done');
+                        ? T('下載中 月面影像與地形資料⋯', 'Downloading surface imagery & terrain data…')
+                        : T('下載中 ', 'Downloading ') + parts[0] + T('⋯', '…'))
+                    : T('完成', 'Done');
                 loadStatus.textContent = lead + ' ' + pct + '%';
             }
         }
@@ -11728,7 +11759,7 @@ const cv = makeProceduralElevationCanvas();
                     return;
                 }
 
-                el.textContent = state.lang === 'tw' ? label.data.tw : label.data.en;
+                el.textContent = featureLabel(label.data);
                 const facing = pos.clone().normalize().dot(cameraPos) > 0.18; // stay clear of the limb so tags don't spill into the sky
                 const selected = isSelected(label.data.id);
 
@@ -12454,10 +12485,13 @@ const cv = makeProceduralElevationCanvas();
             const info = TYPE_INFO[feature.type] || TYPE_INFO.Crater;
 
             const badge = document.getElementById('dc-badge');
-            badge.textContent = (state.lang === 'tw' ? info.tw : info.en);
+            badge.textContent = typeLabel(info);
             badge.style.background = info.color; badge.style.borderColor = info.color; badge.style.color = '#fff';
-            document.getElementById('dc-name-tw').textContent = state.lang === 'tw' ? feature.tw : feature.en;
-            document.getElementById('dc-name-en').textContent = state.lang === 'tw' ? feature.en : feature.tw;
+            const primary = featureLabel(feature);
+            document.getElementById('dc-name-tw').textContent = primary;
+            // 第二行永遠是「另一個名字」：主名是拉丁文就補中文，主名是中文就補拉丁文。
+            document.getElementById('dc-name-en').textContent =
+                primary === feature.en ? feature.tw : feature.en;
             document.getElementById('dc-coord').textContent = fmtCoord(feature.lat, feature.lon);
             document.getElementById('dc-intro').textContent = featureIntroText(feature);
 
@@ -12548,6 +12582,8 @@ const cv = makeProceduralElevationCanvas();
             'harpalus': { tw: '哈帕盧斯環形山直徑約 39 公里，是冷海西端明亮的小坑。', en: 'A bright small crater (~39 km) at the west end of Mare Frigoris.' }
         };
 
+        // 地形說明目前只有繁中／英文兩版：其餘九種語言先顯示英文版，
+        // 等介面版面確認後再補齊各語言的說明翻譯。
         function featureIntroText(feature) {
             const lang = state.lang === 'tw' ? 'tw' : 'en';
             if (feature.landing) return landingIntro(feature, lang);
@@ -12609,8 +12645,8 @@ const cv = makeProceduralElevationCanvas();
         // =====================================================================
         function renderTypeChips() {
             const wrap = document.getElementById('type-chips');
-            const defs = [['all', state.lang === 'tw' ? '全部' : 'All']];
-            Object.keys(TYPE_INFO).forEach(t => defs.push([t, state.lang === 'tw' ? TYPE_INFO[t].tw : TYPE_INFO[t].en]));
+            const defs = [['all', T('全部', 'All')]];
+            Object.keys(TYPE_INFO).forEach(t => defs.push([t, typeLabel(TYPE_INFO[t])]));
             wrap.innerHTML = '';
             defs.forEach(([type, label]) => {
                 const b = document.createElement('button');
@@ -12671,10 +12707,11 @@ const cv = makeProceduralElevationCanvas();
                 nameCol.className = 'flex-1 min-w-0';
                 const main = document.createElement('span');
                 main.className = 'block text-[12px] text-gray-100 truncate';
-                main.textContent = state.lang === 'tw' ? f.tw : f.en;
+                const primary = featureLabel(f);
+                main.textContent = primary;
                 const sub = document.createElement('span');
                 sub.className = 'block text-[10px] text-gray-500 truncate';
-                sub.textContent = state.lang === 'tw' ? f.en : f.tw;
+                sub.textContent = primary === f.en ? f.tw : f.en;
                 nameCol.appendChild(main); nameCol.appendChild(sub);
                 const lv = document.createElement('span');
                 lv.className = 'text-[10px] text-gray-600 flex-shrink-0';
@@ -12686,7 +12723,7 @@ const cv = makeProceduralElevationCanvas();
             if (items.length > LIST_MAX) {
                 const more = document.createElement('div');
                 more.className = 'text-[10px] text-gray-500 text-center py-1';
-                more.textContent = (state.lang === 'tw' ? '僅顯示前 ' : 'Showing first ') + LIST_MAX + (state.lang === 'tw' ? ' 筆，請輸入關鍵字縮小範圍' : ', refine with keywords');
+                more.textContent = T('僅顯示前 ', 'Showing first ') + LIST_MAX + T(' 筆，請輸入關鍵字縮小範圍', ', refine with keywords');
                 featureList.appendChild(more);
             }
             searchCount.textContent = items.length + ' / ' + lunarFeatures.length;
@@ -12735,7 +12772,7 @@ const cv = makeProceduralElevationCanvas();
         });
 
         // =====================================================================
-        // Interface localisation (繁體中文 / English)
+        // Interface localisation: 繁體中文 / English + 9 more languages
         // The Chinese wording is the hard-coded markup, so the first call
         // snapshots it and switching back restores it verbatim — the Chinese
         // interface can never drift because of these tables.
@@ -12862,29 +12899,1243 @@ const cv = makeProceduralElevationCanvas();
             tw: { title: '互動月球觀測儀',
                   desc: '互動月球觀測儀：結合真實月相、地形名稱與晨昏線資訊，輔助天文觀測。' },
             en: { title: 'Interactive Lunar Observer',
-                  desc: 'Interactive lunar observer: real phases, feature names and the terminator, for astronomical observing.' }
+                  desc: 'Interactive lunar observer: real phases, feature names and the terminator, for astronomical observing.' },
+            ja: { title: '対話型 月面観測儀',
+                  desc: '対話型の月面観測ツール。実際の月相と地形名、晨昏線の情報を組み合わせて観測を助けます。' },
+            ko: { title: '대화형 달 관측기',
+                  desc: '대화형 달 관측기: 실제 월상과 지형 이름, 명암 경계선 정보로 천체 관측을 돕습니다.' },
+            es: { title: 'Observatorio Lunar interactivo',
+                  desc: 'Observatorio lunar interactivo: fases reales, nombres de rasgos y el terminador, para la observación astronómica.' },
+            pt: { title: 'Observatório Lunar interativo',
+                  desc: 'Observatório lunar interativo: fases reais, nomes de acidentes e o terminador, para observação astronômica.' },
+            fr: { title: 'Observateur lunaire interactif',
+                  desc: 'Observateur lunaire interactif : phases réelles, noms des traits et le terminateur, pour l’observation astronomique.' },
+            de: { title: 'Interaktiver Mondbeobachter',
+                  desc: 'Interaktiver Mondbeobachter: echte Phasen, Objektnamen und der Terminator – für astronomische Beobachtungen.' },
+            cs: { title: 'Interaktivní měsíční pozorovatel',
+                  desc: 'Interaktivní pozorování Měsíce: skutečné fáze, názvy útvarů a terminátor pro astronomické pozorování.' },
+            pl: { title: 'Interaktywny Obserwator Księżyca',
+                  desc: 'Interaktywny obserwator Księżyca: rzeczywiste fazy, nazwy formacji i terminator – do obserwacji astronomicznych.' },
+            it: { title: 'Osservatore Lunare interattivo',
+                  desc: 'Osservatore lunare interattivo: fasi reali, nomi dei rilievi e il terminatore, per l’osservazione astronomica.' }
+        };
+
+        // =====================================================================
+        // 其餘九種語言的介面字串。鍵是介面上的中文字串（同時也是 I18N_TEXT /
+        // I18N_ATTR 的鍵，或 T() 的第一個參數）；英文存在 I18N_TEXT /
+        // I18N_ATTR，因此這裡只放英、繁中以外的九種語言。查不到就退回英文。
+        // =====================================================================
+        const L10N = {
+            ja: {
+                '正在載入月球資料...': '月球データを読み込み中...',
+                '連接伺服器…': 'サーバーに接続中…',
+                '月球觀測儀': '月面観測儀',
+                '照片疊圖': '写真オーバーレイ',
+                '今天': '今日',
+                '觀測日期與時間': '観測日時',
+                '當前月相': '現在の月相',
+                '（手動）': '（手動）',
+                '朔': '新月',
+                '上弦': '上弦',
+                '望': '満月',
+                '下弦': '下弦',
+                '月齡': '月齢',
+                '被照明率': '輝面率',
+                '視直徑': '視直径',
+                '月地距離': '地球―月距離',
+                '下次新月': '次の新月',
+                '緯度天平動(b) / 經度天平動(ℓ)': '緯度天平動 (b) / 経度天平動 (ℓ)',
+                '位置角P / 視差角q': '位置角 P / 差角 q',
+                '月出 / 月沒': '月の昇 / 月の没',
+                '上傳照片疊圖': '写真をアップロード',
+                '移除疊圖': 'オーバーレイを削除',
+                '下載目前畫面': '現在の画面を保存',
+                '顯示設定': '表示設定',
+                '語言': '言語',
+                '效能模式': 'パフォーマンスモード',
+                '精簡版': '軽量',
+                '完整版': 'フル',
+                '地形顯示': '地形表示',
+                '名稱': '名前',
+                '外框': '外形線',
+                '地形名稱': '地形名',
+                '亮面': '昼側',
+                '暗面': '夜側',
+                '翻轉': '反転',
+                '左右': '左右',
+                '上下': '上下',
+                '月球視野（旋轉 / 翻轉）': '月面視野（回転 / 反転）',
+                '自由旋轉月球': '月を自由に回転',
+                '中心標記': '中心マーク',
+                '回復預設視角（大小與置中）': '初期視点に戻す（大きさ・中央寄せ）',
+                '顯示月面': '月面を表示',
+                '經緯網格': '緯経線グリッド',
+                '整顆月球變亮': '月全体を明るく',
+                '觀測者位置（視差天平動）': '観測者位置（視差天平動）',
+                '我的位置': '現在地',
+                '視差修正': '視差補正',
+                '顯示方向': '表示の向き',
+                '地平天頂向上（直接觀測方向）': '天頂を上に（実際の観測と同じ向き）',
+                '天球北極向上（星圖天球方向）': '天球北極を上に（星図の向き）',
+                '月球北極向上（月面地圖方向）': '月の北極を上に（月面図の向き）',
+                '查詢地形特徵': '地形を探す',
+                '全部': 'すべて',
+                '類型': '種類',
+                '座標': '座標',
+                '0.25 天/秒': '0.25 日/秒',
+                '1 天/秒': '1 日/秒',
+                '3 天/秒': '3 日/秒',
+                '7 天/秒': '7 日/秒',
+                '資料來源': '出典',
+                '資料來源與版權': '出典とライセンス',
+                '月面影像與地形': '月面画像と地形',
+                '影像代理服務': '画像プロキシサービス',
+                '程式庫與字型': 'ライブラリとフォント',
+                '天文資料': '天文データ',
+                'NASA LROC WAC 月面彩色馬賽克（SVS #4720）· 公眾領域': 'NASA LROC WAC 月面カラーモザイク（SVS #4720）· パブリックドメイン',
+                'NASA LOLA 數值地形模型（SVS #4720）· 公眾領域': 'NASA LOLA 高度モデル（SVS #4720）· パブリックドメイン',
+                'Solar System Scope 8K 月球紋理（LROC WAC 馬賽克）· CC BY 4.0': 'Solar System Scope 8K 月テクスチャ（LROC WAC モザイク）· CC BY 4.0',
+                'Three.js 範例備援紋理（moon_1024.jpg）· MIT': 'Three.js サンプル代替テクスチャ（moon_1024.jpg）· MIT',
+                '本機 Stellarium 紋理（textures\\ 資料夾）· 源自 NASA LROC／LOLA 公眾領域影像': 'ローカル Stellarium テクスチャ（textures\\ フォルダー）· NASA LROC/LOLA のパブリックドメイン画像に基づく',
+                'images.weserv.nl 免費圖片縮放／快取服務（BSD 3-Clause）': 'images.weserv.nl 画像リサイズ／キャッシュサービス（BSD 3-Clause）',
+                'Three.js（3D 渲染）· MIT': 'Three.js（3D 描画）· MIT',
+                'OrbitControls（Three.js 官方控制器）· MIT': 'OrbitControls（Three.js 公式コントローラー）· MIT',
+                'Tailwind CSS（樣式）· MIT': 'Tailwind CSS（スタイル）· MIT',
+                'Font Awesome Free 6.4（圖示）· 圖示 CC BY 4.0／字型 SIL OFL 1.1／程式碼 MIT': 'Font Awesome Free 6.4（アイコン）· アイコン CC BY 4.0 ／ フォント SIL OFL 1.1 ／ コード MIT',
+                'Inter 字型（Google Fonts）· SIL OFL 1.1': 'Inter フォント（Google Fonts）· SIL OFL 1.1',
+                '月相與天平動公式：J. Meeus《Astronomical Algorithms》': '月相・天平動の計算式：J. Meeus「Astronomical Algorithms」',
+                'IAU 2003 月球極點模型（Seidelmann, 2003）': 'IAU 2003 月極モデル（Seidelmann, 2003）',
+                '天平動多項式參照 Stellarium 26.2 實作': '天平動多項式は Stellarium 26.2 の実装を参照',
+                '地形特徵名稱與座標：IAU 行星命名總表（USGS Astrogeology）· 公眾領域': '地形名と座標：IAU 惑星命名総目録（USGS Astrogeology）· パブリックドメイン',
+                'NASA 素材依 NASA 媒體使用準則以事實陳述方式使用，不構成 NASA 背書。本網頁不收集或上傳任何個人資料。': 'NASA の素材は NASA のメディア利用ガイドラインに従い事実として使用しており、NASA の公式見解ではありません。本ページは個人データを収集・送信しません。',
+                '收起 / 展開': '折りたたむ / 展開',
+                '日期倒轉': '日付を戻す',
+                '暫停': '一時停止',
+                '日期前進': '日付を進める',
+                '關閉': '閉じる',
+                '顯示畫面中心標記': '視野中心マークを表示',
+                '緯度 N+': '緯度 N+',
+                '經度 E+': '経度 E+',
+                '輸入名稱或關鍵字… (中/英)': '名前またはキーワードを入力…',
+                '視野旋轉角：純影像旋轉（直接使用此參數），不改變月球相對地球的姿態，所以位置角 P、天平動等真實資料不受影響。': '視野回転角：画像をそのまま回転させるパラメーターです。月と地球の相対的な姿勢は変わらないため、位置角 P や天平動などの実データには影響しません。',
+                '月面 selenographic 經緯線：緯度圈與經度輻射線，跟隨月體一起旋轉（受觀測者視差與平衡動影響）': '月面の緯経線：緯度の円と経度の放射線で、月とともに回転します（観測者の視差と天平動の影響を受けます）。',
+                '效能模式：精簡版使用輕量正面月球（無立體地形、無照片疊圖、無自由視角）；完整版保留完整 3D 功能。切換後重新整理立即生效。': 'パフォーマンスモード：軽量は軽量な正面の月を使います（立体地形・写真オーバーレイ・自由視点なし）。フルは 3D 機能をすべて保持します。切り替えは再読み込み後すぐに反映されます。',
+                '資料來源版權': '出典とライセンス',
+                '朔月（新月）': '新月',
+                '眉月（娥眉月）': '眉月',
+                '上弦月': '上弦月',
+                '盈凸月': '満ちる凸月',
+                '滿月（望）': '満月（望）',
+                '虧凸月': '欠ける凸月',
+                '下弦月': '下弦月',
+                '殘月': '残月',
+                ' 天': ' 日',
+                ' 天後': ' 日後',
+                '月面影像': '月面画像',
+                '地形資料': '地形データ',
+                '下載中 月面影像與地形資料⋯': '月面画像と地形データをダウンロード中…',
+                '下載中 ': 'ダウンロード中 ',
+                '⋯': '…',
+                '完成': '完了',
+                '自動判定：': '自動判定: ',
+                '臺中市立惠文高中地球科學教師吳秉勳製作': '臺中市立惠文高級中学校 地球科学科 教師 吴秉勳 による制作',
+                '3D 場景尚未就緒': '3D シーンはまだ準備ができていません',
+                '此瀏覽器不支援定位功能': 'このブラウザーは位置情報に対応していません',
+                '無法取得位置：': '位置を取得できません: ',
+                '僅顯示前 ': '先頭 ',
+                ' 筆，請輸入關鍵字縮小範圍': ' 件を表示中、キーワードで絞り込んでください',
+                '月齡: ': '月齢: ',
+                '地形詳細程度 ': '地形の詳細度 ',
+                '地形起伏 ': '地形の起伏 ',
+                '圖片大小 ': '画像のサイズ ',
+                '旋轉 ': '回転 ',
+                '透明度 ': '不透明度 ',
+                '視野旋轉 ': '視野回転 ',
+                '放大縮小 ': '拡大縮小 ',
+                '/30': '/30',
+                '×': '×',
+                '°': '°',
+            },
+            ko: {
+                '正在載入月球資料...': '월성 데이터 불러오는 중...',
+                '連接伺服器…': '서버에 연결 중…',
+                '月球觀測儀': '달 관측기',
+                '照片疊圖': '사진 오버레이',
+                '今天': '오늘',
+                '觀測日期與時間': '관측 일시',
+                '當前月相': '현재 월상',
+                '（手動）': '(수동)',
+                '朔': '신월',
+                '上弦': '상현',
+                '望': '보름',
+                '下弦': '하현',
+                '月齡': '월령',
+                '被照明率': '휘면율',
+                '視直徑': '시직경',
+                '月地距離': '지구–달 거리',
+                '下次新月': '다음 신월',
+                '緯度天平動(b) / 經度天平動(ℓ)': '위도 천동 (b) / 경도 천동 (ℓ)',
+                '位置角P / 視差角q': '위치각 P / 시차각 q',
+                '月出 / 月沒': '달 뜨는 시각 / 달 지는 시각',
+                '上傳照片疊圖': '사진 업로드',
+                '移除疊圖': '오버레이 제거',
+                '下載目前畫面': '현재 화면 저장',
+                '顯示設定': '표시 설정',
+                '語言': '언어',
+                '效能模式': '성능 모드',
+                '精簡版': '경량',
+                '完整版': '전체',
+                '地形顯示': '지형 표시',
+                '名稱': '이름',
+                '外框': '외곽선',
+                '地形名稱': '지형 이름',
+                '亮面': '밝은 면',
+                '暗面': '어두운 면',
+                '翻轉': '뒤집기',
+                '左右': '좌우',
+                '上下': '상하',
+                '月球視野（旋轉 / 翻轉）': '달 시야 (회전 / 뒤집기)',
+                '自由旋轉月球': '달 자유 회전',
+                '中心標記': '중심 표시',
+                '回復預設視角（大小與置中）': '기본 시점 복원 (크기·중앙 정렬)',
+                '顯示月面': '달 표면 표시',
+                '經緯網格': '위경도 격자',
+                '整顆月球變亮': '달 전체 밝게',
+                '觀測者位置（視差天平動）': '관측자 위치 (시차 천동)',
+                '我的位置': '내 위치',
+                '視差修正': '시차 보정',
+                '顯示方向': '표시 방향',
+                '地平天頂向上（直接觀測方向）': '천정 위쪽 (실제 관측 방향)',
+                '天球北極向上（星圖天球方向）': '천구 북극 위쪽 (성도 방향)',
+                '月球北極向上（月面地圖方向）': '달의 북극 위쪽 (달 지도 방향)',
+                '查詢地形特徵': '지형 찾기',
+                '全部': '전체',
+                '類型': '유형',
+                '座標': '좌표',
+                '0.25 天/秒': '0.25 일/초',
+                '1 天/秒': '1 일/초',
+                '3 天/秒': '3 일/초',
+                '7 天/秒': '7 일/초',
+                '資料來源': '출처',
+                '資料來源與版權': '출처 및 저작권',
+                '月面影像與地形': '달 표면 영상과 지형',
+                '影像代理服務': '이미지 프록시 서비스',
+                '程式庫與字型': '라이브러리 및 글꼴',
+                '天文資料': '천문 데이터',
+                'NASA LROC WAC 月面彩色馬賽克（SVS #4720）· 公眾領域': 'NASA LROC WAC 달 색상 모자이크 (SVS #4720) · 퍼블릭 도메인',
+                'NASA LOLA 數值地形模型（SVS #4720）· 公眾領域': 'NASA LOLA 수치 고도 모델 (SVS #4720) · 퍼블릭 도메인',
+                'Solar System Scope 8K 月球紋理（LROC WAC 馬賽克）· CC BY 4.0': 'Solar System Scope 8K 달 텍스처 (LROC WAC 모자이크) · CC BY 4.0',
+                'Three.js 範例備援紋理（moon_1024.jpg）· MIT': 'Three.js 예제 대체 텍스처 (moon_1024.jpg) · MIT',
+                '本機 Stellarium 紋理（textures\\ 資料夾）· 源自 NASA LROC／LOLA 公眾領域影像': '로컬 Stellarium 텍스처 (textures\\ 폴더) · NASA LROC/LOLA 퍼블릭 도메인 이미지 기반',
+                'images.weserv.nl 免費圖片縮放／快取服務（BSD 3-Clause）': 'images.weserv.nl 이미지 크기 조절/캐시 서비스 (BSD 3-Clause)',
+                'Three.js（3D 渲染）· MIT': 'Three.js (3D 렌더링) · MIT',
+                'OrbitControls（Three.js 官方控制器）· MIT': 'OrbitControls (Three.js 공식 컨트롤러) · MIT',
+                'Tailwind CSS（樣式）· MIT': 'Tailwind CSS (스타일) · MIT',
+                'Font Awesome Free 6.4（圖示）· 圖示 CC BY 4.0／字型 SIL OFL 1.1／程式碼 MIT': 'Font Awesome Free 6.4 (아이콘) · 아이콘 CC BY 4.0 / 글꼴 SIL OFL 1.1 / 코드 MIT',
+                'Inter 字型（Google Fonts）· SIL OFL 1.1': 'Inter 글꼴 (Google Fonts) · SIL OFL 1.1',
+                '月相與天平動公式：J. Meeus《Astronomical Algorithms》': '월상·천동 계산식: J. Meeus, Astronomical Algorithms',
+                'IAU 2003 月球極點模型（Seidelmann, 2003）': 'IAU 2003 달 극 모델 (Seidelmann, 2003)',
+                '天平動多項式參照 Stellarium 26.2 實作': '천동 다항식은 Stellarium 26.2 구현을 참조',
+                '地形特徵名稱與座標：IAU 行星命名總表（USGS Astrogeology）· 公眾領域': '지형 이름과 좌표: IAU 행성 명칭 총표 (USGS Astrogeology) · 퍼블릭 도메인',
+                'NASA 素材依 NASA 媒體使用準則以事實陳述方式使用，不構成 NASA 背書。本網頁不收集或上傳任何個人資料。': 'NASA 자료는 NASA 미디어 사용 지침에 따라 사실적으로 사용되었으며 NASA의 공식 입장이 아닙니다. 이 페이지는 개인 데이터를 수집하거나 전송하지 않습니다.',
+                '收起 / 展開': '접기 / 펼치기',
+                '日期倒轉': '날짜 되감기',
+                '暫停': '일시정지',
+                '日期前進': '날짜 앞으로',
+                '關閉': '닫기',
+                '顯示畫面中心標記': '화면 중심 표시',
+                '緯度 N+': '위도 N+',
+                '經度 E+': '경도 E+',
+                '輸入名稱或關鍵字… (中/英)': '이름 또는 키워드 입력…',
+                '視野旋轉角：純影像旋轉（直接使用此參數），不改變月球相對地球的姿態，所以位置角 P、天平動等真實資料不受影響。': '시야 회전각: 이미지를 그대로 회전시키는 매개변수입니다. 달과 지구의 상대적인 자세가 바뀌지 않으므로 위치각 P, 천동 등 실제 데이터에는 영향을 주지 않습니다.',
+                '月面 selenographic 經緯線：緯度圈與經度輻射線，跟隨月體一起旋轉（受觀測者視差與平衡動影響）': '달 표면의 위경도선: 위도 원과 경도 방사선으로, 달과 함께 회전합니다 (관측자의 시차와 천동의 영향을 받습니다).',
+                '效能模式：精簡版使用輕量正面月球（無立體地形、無照片疊圖、無自由視角）；完整版保留完整 3D 功能。切換後重新整理立即生效。': '성능 모드: 경량은 가벼운 정면 달을 사용합니다 (입체 지형·사진 오버레이·자유 시점 없음). 전체는 모든 3D 기능을 유지합니다. 전환 후 새로고침하면 즉시 적용됩니다.',
+                '資料來源版權': '출처 및 저작권',
+                '朔月（新月）': '신월 (그믐달)',
+                '眉月（娥眉月）': '초승달',
+                '上弦月': '상현달',
+                '盈凸月': '차오르는 달',
+                '滿月（望）': '보름달',
+                '虧凸月': '기우는 달',
+                '下弦月': '하현달',
+                '殘月': '그믐달',
+                ' 天': ' 일',
+                ' 天後': ' 일 후',
+                '月面影像': '달 표면 영상',
+                '地形資料': '지형 데이터',
+                '下載中 月面影像與地形資料⋯': '달 표면 영상과 지형 데이터 내려받는 중…',
+                '下載中 ': '내려받는 중 ',
+                '⋯': '…',
+                '完成': '완료',
+                '自動判定：': '자동 감지: ',
+                '臺中市立惠文高中地球科學教師吳秉勳製作': '타이중 시립 후이원 고등학교 지구과학 교사 오병훈 제작',
+                '3D 場景尚未就緒': '3D 장면이 아직 준비되지 않았습니다',
+                '此瀏覽器不支援定位功能': '이 브라우저는 위치 서비스를 지원하지 않습니다',
+                '無法取得位置：': '위치를 가져올 수 없습니다: ',
+                '僅顯示前 ': '처음 ',
+                ' 筆，請輸入關鍵字縮小範圍': '건을 표시했습니다. 키워드로 범위를 좁혀 주세요',
+                '月齡: ': '월령: ',
+                '地形詳細程度 ': '지형 세부 수준 ',
+                '地形起伏 ': '지형 고저 ',
+                '圖片大小 ': '이미지 크기 ',
+                '旋轉 ': '회전 ',
+                '透明度 ': '불투명도 ',
+                '視野旋轉 ': '시야 회전 ',
+                '放大縮小 ': '확대/축소 ',
+                '/30': '/30',
+                '×': '×',
+                '°': '°',
+            },
+            es: {
+                '正在載入月球資料...': 'Cargando datos lunares...',
+                '連接伺服器…': 'Conectando con los servidores…',
+                '月球觀測儀': 'Observatorio Lunar',
+                '照片疊圖': 'Superposición de foto',
+                '今天': 'Hoy',
+                '觀測日期與時間': 'Fecha y hora de observación',
+                '當前月相': 'Fase actual',
+                '（手動）': '(manual)',
+                '朔': 'Nueva',
+                '上弦': 'Cuarto creciente',
+                '望': 'Llena',
+                '下弦': 'Cuarto menguante',
+                '月齡': 'Edad de la Luna',
+                '被照明率': 'Fracción iluminada',
+                '視直徑': 'Diámetro aparente',
+                '月地距離': 'Distancia Tierra–Luna',
+                '下次新月': 'Próxima luna nueva',
+                '緯度天平動(b) / 經度天平動(ℓ)': 'Libración en latitud (b) / en longitud (ℓ)',
+                '位置角P / 視差角q': 'Ángulo posicional P / ángulo paraláctico q',
+                '月出 / 月沒': 'Salida / puesta de la Luna',
+                '上傳照片疊圖': 'Subir foto para superponer',
+                '移除疊圖': 'Quitar superposición',
+                '下載目前畫面': 'Descargar la imagen actual',
+                '顯示設定': 'Ajustes de visualización',
+                '語言': 'Idioma',
+                '效能模式': 'Modo de rendimiento',
+                '精簡版': 'Ligero',
+                '完整版': 'Completo',
+                '地形顯示': 'Visualización del terreno',
+                '名稱': 'Nombres',
+                '外框': 'Contornos',
+                '地形名稱': 'Nombres de rasgos',
+                '亮面': 'Cara iluminada',
+                '暗面': 'Cara oscura',
+                '翻轉': 'Voltear',
+                '左右': 'Horizontal',
+                '上下': 'Vertical',
+                '月球視野（旋轉 / 翻轉）': 'Campo lunar (rotar / voltear)',
+                '自由旋轉月球': 'Rotar la Luna libremente',
+                '中心標記': 'Marcador central',
+                '回復預設視角（大小與置中）': 'Restablecer la vista (tamaño y centrado)',
+                '顯示月面': 'Mostrar la superficie',
+                '經緯網格': 'Retícula selenográfica',
+                '整顆月球變亮': 'Aclarar toda la Luna',
+                '觀測者位置（視差天平動）': 'Posición del observador (libración paraláctica)',
+                '我的位置': 'Mi ubicación',
+                '視差修正': 'Corrección de paralaje',
+                '顯示方向': 'Orientación',
+                '地平天頂向上（直接觀測方向）': 'Cenit arriba (como se observa)',
+                '天球北極向上（星圖天球方向）': 'Norte celeste arriba (orientación de carta estelar)',
+                '月球北極向上（月面地圖方向）': 'Norte lunar arriba (orientación de mapa lunar)',
+                '查詢地形特徵': 'Buscar rasgos',
+                '全部': 'Todos',
+                '類型': 'Tipo',
+                '座標': 'Coordenadas',
+                '0.25 天/秒': '0.25 día/s',
+                '1 天/秒': '1 día/s',
+                '3 天/秒': '3 días/s',
+                '7 天/秒': '7 días/s',
+                '資料來源': 'Fuentes',
+                '資料來源與版權': 'Fuentes y licencia',
+                '月面影像與地形': 'Imágenes y terreno lunar',
+                '影像代理服務': 'Servicio proxy de imágenes',
+                '程式庫與字型': 'Bibliotecas y tipografías',
+                '天文資料': 'Datos astronómicos',
+                'NASA LROC WAC 月面彩色馬賽克（SVS #4720）· 公眾領域': 'Mosaico en color de la superficie lunar NASA LROC WAC (SVS #4720) · dominio público',
+                'NASA LOLA 數值地形模型（SVS #4720）· 公眾領域': 'Modelo digital de elevación NASA LOLA (SVS #4720) · dominio público',
+                'Solar System Scope 8K 月球紋理（LROC WAC 馬賽克）· CC BY 4.0': 'Textura lunar 8K de Solar System Scope (mosaico LROC WAC) · CC BY 4.0',
+                'Three.js 範例備援紋理（moon_1024.jpg）· MIT': 'Textura de respaldo del ejemplo de Three.js (moon_1024.jpg) · MIT',
+                '本機 Stellarium 紋理（textures\\ 資料夾）· 源自 NASA LROC／LOLA 公眾領域影像': 'Texturas locales de Stellarium (carpeta textures\\) · derivadas de imágenes de dominio público de NASA LROC/LOLA',
+                'images.weserv.nl 免費圖片縮放／快取服務（BSD 3-Clause）': 'Servicio gratuito de redimensionado y caché de imágenes images.weserv.nl (BSD 3-Clause)',
+                'Three.js（3D 渲染）· MIT': 'Three.js (renderizado 3D) · MIT',
+                'OrbitControls（Three.js 官方控制器）· MIT': 'OrbitControls (controlador oficial de Three.js) · MIT',
+                'Tailwind CSS（樣式）· MIT': 'Tailwind CSS (estilos) · MIT',
+                'Font Awesome Free 6.4（圖示）· 圖示 CC BY 4.0／字型 SIL OFL 1.1／程式碼 MIT': 'Font Awesome Free 6.4 (iconos) · iconos CC BY 4.0 / tipografía SIL OFL 1.1 / código MIT',
+                'Inter 字型（Google Fonts）· SIL OFL 1.1': 'Tipografía Inter (Google Fonts) · SIL OFL 1.1',
+                '月相與天平動公式：J. Meeus《Astronomical Algorithms》': 'Fases lunares y libraciones: J. Meeus, Astronomical Algorithms',
+                'IAU 2003 月球極點模型（Seidelmann, 2003）': 'Modelo de polo lunar IAU 2003 (Seidelmann, 2003)',
+                '天平動多項式參照 Stellarium 26.2 實作': 'Polinomios de libración basados en la implementación de Stellarium 26.2',
+                '地形特徵名稱與座標：IAU 行星命名總表（USGS Astrogeology）· 公眾領域': 'Nombres y coordenadas de rasgos: Gazetteer de nomenclatura planetaria de la IAU (USGS Astrogeology) · dominio público',
+                'NASA 素材依 NASA 媒體使用準則以事實陳述方式使用，不構成 NASA 背書。本網頁不收集或上傳任何個人資料。': 'El material de la NASA se usa de forma factual según sus directrices de uso de medios; no implica respaldo de la NASA. Esta página no recopila ni envía datos personales.',
+                '收起 / 展開': 'Contraer / expandir',
+                '日期倒轉': 'Retroceder la fecha',
+                '暫停': 'Pausar',
+                '日期前進': 'Avanzar la fecha',
+                '關閉': 'Cerrar',
+                '顯示畫面中心標記': 'Mostrar el marcador del centro de la vista',
+                '緯度 N+': 'Latitud N+',
+                '經度 E+': 'Longitud E+',
+                '輸入名稱或關鍵字… (中/英)': 'Escribe un nombre o una palabra clave…',
+                '視野旋轉角：純影像旋轉（直接使用此參數），不改變月球相對地球的姿態，所以位置角 P、天平動等真實資料不受影響。': 'Ángulo de rotación del campo: una rotación pura de la imagen (este parámetro se usa directamente). No cambia la actitud de la Luna respecto a la Tierra, por lo que datos reales como el ángulo posicional P y la libración no se ven afectados.',
+                '月面 selenographic 經緯線：緯度圈與經度輻射線，跟隨月體一起旋轉（受觀測者視差與平衡動影響）': 'Retícula selenográfica sobre la superficie lunar: círculos de latitud y rayos de longitud que rotan con la Luna (afectados por el paralaje y la libración del observador).',
+                '效能模式：精簡版使用輕量正面月球（無立體地形、無照片疊圖、無自由視角）；完整版保留完整 3D 功能。切換後重新整理立即生效。': 'Modo de rendimiento: Ligero usa una Luna frontal ligera (sin relieve 3D, sin superposición de fotos, sin vista libre); Completo conserva todas las funciones 3D. El cambio se aplica tras recargar la página.',
+                '資料來源版權': 'Fuentes y licencia',
+                '朔月（新月）': 'Luna nueva',
+                '眉月（娥眉月）': 'Luna creciente',
+                '上弦月': 'Primer cuarto',
+                '盈凸月': 'Casi llena',
+                '滿月（望）': 'Luna llena',
+                '虧凸月': 'Casi menguante',
+                '下弦月': 'Último cuarto',
+                '殘月': 'Luna menguante',
+                ' 天': ' días',
+                ' 天後': ' días',
+                '月面影像': 'imágenes de la superficie',
+                '地形資料': 'datos del terreno',
+                '下載中 月面影像與地形資料⋯': 'Descargando imágenes de la superficie y datos del terreno…',
+                '下載中 ': 'Descargando ',
+                '⋯': '…',
+                '完成': 'Listo',
+                '自動判定：': 'auto: ',
+                '臺中市立惠文高中地球科學教師吳秉勳製作': 'Creado por Bing-Syun Wu, profesor de Ciencias de la Tierra del Instituto Secundario Hui-Wen (Taichung)',
+                '3D 場景尚未就緒': 'La escena 3D aún no está lista',
+                '此瀏覽器不支援定位功能': 'Este navegador no admite la geolocalización',
+                '無法取得位置：': 'No se pudo obtener la ubicación: ',
+                '僅顯示前 ': 'Mostrando solo los primeros ',
+                ' 筆，請輸入關鍵字縮小範圍': ', refina con palabras clave',
+                '月齡: ': 'Edad de la Luna: ',
+                '地形詳細程度 ': 'Nivel de detalle del terreno ',
+                '地形起伏 ': 'Relieve del terreno ',
+                '圖片大小 ': 'Tamaño de la imagen ',
+                '旋轉 ': 'Rotación ',
+                '透明度 ': 'Opacidad ',
+                '視野旋轉 ': 'Rotación del campo ',
+                '放大縮小 ': 'Zoom ',
+                '/30': '/30',
+                '×': '×',
+                '°': '°',
+            },
+            pt: {
+                '正在載入月球資料...': 'Carregando dados lunares...',
+                '連接伺服器…': 'Conectando aos servidores…',
+                '月球觀測儀': 'Observatório Lunar',
+                '照片疊圖': 'Sobreposição de foto',
+                '今天': 'Hoje',
+                '觀測日期與時間': 'Data e hora da observação',
+                '當前月相': 'Fase atual',
+                '（手動）': '(manual)',
+                '朔': 'Nova',
+                '上弦': 'Quarto crescente',
+                '望': 'Cheia',
+                '下弦': 'Quarto minguante',
+                '月齡': 'Idade da Lua',
+                '被照明率': 'Fração iluminada',
+                '視直徑': 'Diâmetro aparente',
+                '月地距離': 'Distância Terra–Lua',
+                '下次新月': 'Próxima lua nova',
+                '緯度天平動(b) / 經度天平動(ℓ)': 'Libração em latitude (b) / em longitude (ℓ)',
+                '位置角P / 視差角q': 'Ângulo de posição P / ângulo paralático q',
+                '月出 / 月沒': 'Nascer / pôr da Lua',
+                '上傳照片疊圖': 'Enviar foto para sobrepor',
+                '移除疊圖': 'Remover sobreposição',
+                '下載目前畫面': 'Baixar a imagem atual',
+                '顯示設定': 'Ajustes de exibição',
+                '語言': 'Idioma',
+                '效能模式': 'Modo de desempenho',
+                '精簡版': 'Leve',
+                '完整版': 'Completo',
+                '地形顯示': 'Exibição do terreno',
+                '名稱': 'Nomes',
+                '外框': 'Contornos',
+                '地形名稱': 'Nomes dos acidentes',
+                '亮面': 'Face iluminada',
+                '暗面': 'Face escura',
+                '翻轉': 'Virar',
+                '左右': 'Horizontal',
+                '上下': 'Vertical',
+                '月球視野（旋轉 / 翻轉）': 'Campo lunar (girar / virar)',
+                '自由旋轉月球': 'Girar a Lua livremente',
+                '中心標記': 'Marcador central',
+                '回復預設視角（大小與置中）': 'Redefinir a visualização (tamanho e centralização)',
+                '顯示月面': 'Mostrar a superfície',
+                '經緯網格': 'Retícula selenográfica',
+                '整顆月球變亮': 'Iluminar toda a Lua',
+                '觀測者位置（視差天平動）': 'Posição do observador (libração paralática)',
+                '我的位置': 'Minha localização',
+                '視差修正': 'Correção de paralaxe',
+                '顯示方向': 'Orientação',
+                '地平天頂向上（直接觀測方向）': 'Cênit para cima (como na observação direta)',
+                '天球北極向上（星圖天球方向）': 'Norte celeste para cima (orientação de carta estelar)',
+                '月球北極向上（月面地圖方向）': 'Norte lunar para cima (orientação de mapa lunar)',
+                '查詢地形特徵': 'Buscar acidentes',
+                '全部': 'Todos',
+                '類型': 'Tipo',
+                '座標': 'Coordenadas',
+                '0.25 天/秒': '0.25 dia/s',
+                '1 天/秒': '1 dia/s',
+                '3 天/秒': '3 dias/s',
+                '7 天/秒': '7 dias/s',
+                '資料來源': 'Fontes',
+                '資料來源與版權': 'Fontes e licença',
+                '月面影像與地形': 'Imagens e terreno lunares',
+                '影像代理服務': 'Serviço de proxy de imagens',
+                '程式庫與字型': 'Bibliotecas e fontes',
+                '天文資料': 'Dados astronômicos',
+                'NASA LROC WAC 月面彩色馬賽克（SVS #4720）· 公眾領域': 'Mosaico colorido da superfície lunar NASA LROC WAC (SVS #4720) · domínio público',
+                'NASA LOLA 數值地形模型（SVS #4720）· 公眾領域': 'Modelo digital de elevação NASA LOLA (SVS #4720) · domínio público',
+                'Solar System Scope 8K 月球紋理（LROC WAC 馬賽克）· CC BY 4.0': 'Textura lunar 8K do Solar System Scope (mosaico LROC WAC) · CC BY 4.0',
+                'Three.js 範例備援紋理（moon_1024.jpg）· MIT': 'Textura de fallback do exemplo do Three.js (moon_1024.jpg) · MIT',
+                '本機 Stellarium 紋理（textures\\ 資料夾）· 源自 NASA LROC／LOLA 公眾領域影像': 'Texturas locais do Stellarium (pasta textures\\) · derivadas de imagens de domínio público da NASA LROC/LOLA',
+                'images.weserv.nl 免費圖片縮放／快取服務（BSD 3-Clause）': 'Serviço gratuito de redimensionamento e cache de imagens images.weserv.nl (BSD 3-Clause)',
+                'Three.js（3D 渲染）· MIT': 'Three.js (renderização 3D) · MIT',
+                'OrbitControls（Three.js 官方控制器）· MIT': 'OrbitControls (controlador oficial do Three.js) · MIT',
+                'Tailwind CSS（樣式）· MIT': 'Tailwind CSS (estilos) · MIT',
+                'Font Awesome Free 6.4（圖示）· 圖示 CC BY 4.0／字型 SIL OFL 1.1／程式碼 MIT': 'Font Awesome Free 6.4 (ícones) · ícones CC BY 4.0 / fonte SIL OFL 1.1 / código MIT',
+                'Inter 字型（Google Fonts）· SIL OFL 1.1': 'Fonte Inter (Google Fonts) · SIL OFL 1.1',
+                '月相與天平動公式：J. Meeus《Astronomical Algorithms》': 'Fases lunares e librações: J. Meeus, Astronomical Algorithms',
+                'IAU 2003 月球極點模型（Seidelmann, 2003）': 'Modelo de polo lunar IAU 2003 (Seidelmann, 2003)',
+                '天平動多項式參照 Stellarium 26.2 實作': 'Polinômios de libração baseados na implementação do Stellarium 26.2',
+                '地形特徵名稱與座標：IAU 行星命名總表（USGS Astrogeology）· 公眾領域': 'Nomes e coordenadas dos acidentes: Gazetteer de nomenclatura planetária da IAU (USGS Astrogeology) · domínio público',
+                'NASA 素材依 NASA 媒體使用準則以事實陳述方式使用，不構成 NASA 背書。本網頁不收集或上傳任何個人資料。': 'O material da NASA é usado factualmente conforme suas diretrizes de uso de mídia; não representa endosso da NASA. Esta página não coleta nem envia dados pessoais.',
+                '收起 / 展開': 'Recolher / expandir',
+                '日期倒轉': 'Retroceder a data',
+                '暫停': 'Pausar',
+                '日期前進': 'Avançar a data',
+                '關閉': 'Fechar',
+                '顯示畫面中心標記': 'Mostrar o marcador do centro da vista',
+                '緯度 N+': 'Latitude N+',
+                '經度 E+': 'Longitude E+',
+                '輸入名稱或關鍵字… (中/英)': 'Digite um nome ou uma palavra-chave…',
+                '視野旋轉角：純影像旋轉（直接使用此參數），不改變月球相對地球的姿態，所以位置角 P、天平動等真實資料不受影響。': 'Ângulo de rotação do campo: uma rotação pura da imagem (este parâmetro é usado diretamente). Não altera a atitude da Lua em relação à Terra, portanto dados reais como o ângulo de posição P e a libração não são afetados.',
+                '月面 selenographic 經緯線：緯度圈與經度輻射線，跟隨月體一起旋轉（受觀測者視差與平衡動影響）': 'Retícula selenográfica na superfície lunar: círculos de latitude e raios de longitude que giram com a Lua (afetados pelo paralaxe e pela libração do observador).',
+                '效能模式：精簡版使用輕量正面月球（無立體地形、無照片疊圖、無自由視角）；完整版保留完整 3D 功能。切換後重新整理立即生效。': 'Modo de desempenho: Leve usa uma Lua frontal leve (sem relevo 3D, sem sobreposição de fotos, sem visão livre); Completo mantém todos os recursos 3D. A mudança entra em vigor após recarregar a página.',
+                '資料來源版權': 'Fontes e licença',
+                '朔月（新月）': 'Lua nova',
+                '眉月（娥眉月）': 'Lua crescente',
+                '上弦月': 'Quarto crescente',
+                '盈凸月': 'Quase cheia',
+                '滿月（望）': 'Lua cheia',
+                '虧凸月': 'Quase minguante',
+                '下弦月': 'Quarto minguante',
+                '殘月': 'Lua minguante',
+                ' 天': ' dias',
+                ' 天後': ' dias',
+                '月面影像': 'imagens da superfície',
+                '地形資料': 'dados do terreno',
+                '下載中 月面影像與地形資料⋯': 'Baixando imagens da superfície e dados do terreno…',
+                '下載中 ': 'Baixando ',
+                '⋯': '…',
+                '完成': 'Concluído',
+                '自動判定：': 'auto: ',
+                '臺中市立惠文高中地球科學教師吳秉勳製作': 'Criado por Bing-Syun Wu, professor de Ciências da Terra da Escola Secundária Hui-Wen, Taichung',
+                '3D 場景尚未就緒': 'A cena 3D ainda não está pronta',
+                '此瀏覽器不支援定位功能': 'Este navegador não suporta geolocalização',
+                '無法取得位置：': 'Não foi possível obter a localização: ',
+                '僅顯示前 ': 'Mostrando apenas os primeiros ',
+                ' 筆，請輸入關鍵字縮小範圍': ', refine com palavras-chave',
+                '月齡: ': 'Idade da Lua: ',
+                '地形詳細程度 ': 'Nível de detalhe do terreno ',
+                '地形起伏 ': 'Relevo do terreno ',
+                '圖片大小 ': 'Tamanho da imagem ',
+                '旋轉 ': 'Rotação ',
+                '透明度 ': 'Opacidade ',
+                '視野旋轉 ': 'Rotação do campo ',
+                '放大縮小 ': 'Zoom ',
+                '/30': '/30',
+                '×': '×',
+                '°': '°',
+            },
+            fr: {
+                '正在載入月球資料...': 'Chargement des données lunaires…',
+                '連接伺服器…': 'Connexion aux serveurs…',
+                '月球觀測儀': 'Observateur lunaire',
+                '照片疊圖': 'Superposition de photo',
+                '今天': 'Aujourd’hui',
+                '觀測日期與時間': 'Date et heure d’observation',
+                '當前月相': 'Phase actuelle',
+                '（手動）': '(manuelle)',
+                '朔': 'Nouvelle',
+                '上弦': 'Premier quart',
+                '望': 'Pleine',
+                '下弦': 'Dernier quart',
+                '月齡': 'Âge de la Lune',
+                '被照明率': 'Fraction éclairée',
+                '視直徑': 'Diamètre apparent',
+                '月地距離': 'Distance Terre–Lune',
+                '下次新月': 'Prochaine nouvelle Lune',
+                '緯度天平動(b) / 經度天平動(ℓ)': 'Libration en latitude (b) / en longitude (ℓ)',
+                '位置角P / 視差角q': 'Angle de position P / angle parallactique q',
+                '月出 / 月沒': 'Lever / coucher de la Lune',
+                '上傳照片疊圖': 'Téléverser une photo en superposition',
+                '移除疊圖': 'Retirer la superposition',
+                '下載目前畫面': 'Télécharger l’image actuelle',
+                '顯示設定': 'Réglages d’affichage',
+                '語言': 'Langue',
+                '效能模式': 'Mode de performance',
+                '精簡版': 'Léger',
+                '完整版': 'Complet',
+                '地形顯示': 'Affichage du relief',
+                '名稱': 'Noms',
+                '外框': 'Contours',
+                '地形名稱': 'Noms des traits',
+                '亮面': 'Côté éclairé',
+                '暗面': 'Côté sombre',
+                '翻轉': 'Retourner',
+                '左右': 'Horizontal',
+                '上下': 'Vertical',
+                '月球視野（旋轉 / 翻轉）': 'Champ lunaire (rotation / retournement)',
+                '自由旋轉月球': 'Faire pivoter librement la Lune',
+                '中心標記': 'Repère central',
+                '回復預設視角（大小與置中）': 'Réinitialiser la vue (taille et centrage)',
+                '顯示月面': 'Afficher la surface',
+                '經緯網格': 'Graticule sélénographique',
+                '整顆月球變亮': 'Éclairer toute la Lune',
+                '觀測者位置（視差天平動）': 'Position de l’observateur (libration parallactique)',
+                '我的位置': 'Ma position',
+                '視差修正': 'Correction de parallaxe',
+                '顯示方向': 'Orientation',
+                '地平天頂向上（直接觀測方向）': 'Zénith vers le haut (observation directe)',
+                '天球北極向上（星圖天球方向）': 'Nord céleste vers le haut (orientation de carte du ciel)',
+                '月球北極向上（月面地圖方向）': 'Nord lunaire vers le haut (orientation de carte lunaire)',
+                '查詢地形特徵': 'Rechercher des traits',
+                '全部': 'Tous',
+                '類型': 'Type',
+                '座標': 'Coordonnées',
+                '0.25 天/秒': '0,25 jour/s',
+                '1 天/秒': '1 jour/s',
+                '3 天/秒': '3 jours/s',
+                '7 天/秒': '7 jours/s',
+                '資料來源': 'Sources',
+                '資料來源與版權': 'Sources et licence',
+                '月面影像與地形': 'Imagerie et relief lunaire',
+                '影像代理服務': 'Service proxy d’images',
+                '程式庫與字型': 'Bibliothèques et polices',
+                '天文資料': 'Données astronomiques',
+                'NASA LROC WAC 月面彩色馬賽克（SVS #4720）· 公眾領域': 'Mosaïque en couleur de la surface lunaire NASA LROC WAC (SVS #4720) · domaine public',
+                'NASA LOLA 數值地形模型（SVS #4720）· 公眾領域': 'Modèle numérique d’élévation NASA LOLA (SVS #4720) · domaine public',
+                'Solar System Scope 8K 月球紋理（LROC WAC 馬賽克）· CC BY 4.0': 'Texture lunaire 8K de Solar System Scope (mosaïque LROC WAC) · CC BY 4.0',
+                'Three.js 範例備援紋理（moon_1024.jpg）· MIT': 'Texture de secours de l’exemple Three.js (moon_1024.jpg) · MIT',
+                '本機 Stellarium 紋理（textures\\ 資料夾）· 源自 NASA LROC／LOLA 公眾領域影像': 'Textures Stellarium locales (dossier textures\\) · issues d’images du domaine public NASA LROC/LOLA',
+                'images.weserv.nl 免費圖片縮放／快取服務（BSD 3-Clause）': 'Service gratuit de redimensionnement et de cache d’images images.weserv.nl (BSD 3-Clause)',
+                'Three.js（3D 渲染）· MIT': 'Three.js (rendu 3D) · MIT',
+                'OrbitControls（Three.js 官方控制器）· MIT': 'OrbitControls (contrôleur officiel de Three.js) · MIT',
+                'Tailwind CSS（樣式）· MIT': 'Tailwind CSS (styles) · MIT',
+                'Font Awesome Free 6.4（圖示）· 圖示 CC BY 4.0／字型 SIL OFL 1.1／程式碼 MIT': 'Font Awesome Free 6.4 (icônes) · icônes CC BY 4.0 / police SIL OFL 1.1 / code MIT',
+                'Inter 字型（Google Fonts）· SIL OFL 1.1': 'Police Inter (Google Fonts) · SIL OFL 1.1',
+                '月相與天平動公式：J. Meeus《Astronomical Algorithms》': 'Phases de la Lune et librations : J. Meeus, Astronomical Algorithms',
+                'IAU 2003 月球極點模型（Seidelmann, 2003）': 'Modèle de pôle lunaire IAU 2003 (Seidelmann, 2003)',
+                '天平動多項式參照 Stellarium 26.2 實作': 'Polynômes de libration d’après l’implémentation de Stellarium 26.2',
+                '地形特徵名稱與座標：IAU 行星命名總表（USGS Astrogeology）· 公眾領域': 'Noms et coordonnées des traits : Gazetteer of Planetary Nomenclature de l’IAU (USGS Astrogeology) · domaine public',
+                'NASA 素材依 NASA 媒體使用準則以事實陳述方式使用，不構成 NASA 背書。本網頁不收集或上傳任何個人資料。': 'Le matériel de la NASA est utilisé de manière factuelle conformément à ses directives d’utilisation des médias ; cela ne constitue pas une approbation par la NASA. Cette page ne collecte ni ne transmet de données personnelles.',
+                '收起 / 展開': 'Réduire / développer',
+                '日期倒轉': 'Reculer la date',
+                '暫停': 'Pause',
+                '日期前進': 'Avancer la date',
+                '關閉': 'Fermer',
+                '顯示畫面中心標記': 'Afficher le repère du centre de la vision',
+                '緯度 N+': 'Latitude N+',
+                '經度 E+': 'Longitude E+',
+                '輸入名稱或關鍵字… (中/英)': 'Saisissez un nom ou un mot-clé…',
+                '視野旋轉角：純影像旋轉（直接使用此參數），不改變月球相對地球的姿態，所以位置角 P、天平動等真實資料不受影響。': 'Angle de rotation du champ : une simple rotation de l’image (ce paramètre est utilisé directement). Elle ne modifie pas l’attitude de la Lune par rapport à la Terre ; les données réelles comme l’angle de position P et la libration ne sont donc pas affectées.',
+                '月面 selenographic 經緯線：緯度圈與經度輻射線，跟隨月體一起旋轉（受觀測者視差與平衡動影響）': 'Graticule sélénographique sur la surface lunaire : cercles de latitude et rayons de longitude qui pivotent avec la Lune (influencés par la parallaxe et la libration de l’observateur).',
+                '效能模式：精簡版使用輕量正面月球（無立體地形、無照片疊圖、無自由視角）；完整版保留完整 3D 功能。切換後重新整理立即生效。': 'Mode de performance : Léger utilise une Lune claire légère (sans relief 3D, sans superposition de photos, sans vue libre) ; Complet conserve toutes les fonctions 3D. Le changement prend effet après le rechargement de la page.',
+                '資料來源版權': 'Sources et licence',
+                '朔月（新月）': 'Nouvelle Lune',
+                '眉月（娥眉月）': 'Premier croissant',
+                '上弦月': 'Premier quart',
+                '盈凸月': 'Lune gibbeuse croissante',
+                '滿月（望）': 'Pleine Lune',
+                '虧凸月': 'Lune gibbeuse décroissante',
+                '下弦月': 'Dernier quart',
+                '殘月': 'Dernier croissant',
+                ' 天': ' jours',
+                ' 天後': ' jours',
+                '月面影像': 'imagerie de surface',
+                '地形資料': 'données de relief',
+                '下載中 月面影像與地形資料⋯': 'Téléchargement de l’imagerie de surface et des données de relief…',
+                '下載中 ': 'Téléchargement de ',
+                '⋯': '…',
+                '完成': 'Terminé',
+                '自動判定：': 'auto : ',
+                '臺中市立惠文高中地球科學教師吳秉勳製作': 'Réalisé par Bing-Syun Wu, professeur de sciences de la Terre au lycée Hui-Wen de Taichung',
+                '3D 場景尚未就緒': 'La scène 3D n’est pas encore prête',
+                '此瀏覽器不支援定位功能': 'Ce navigateur ne prend pas en charge la géolocalisation',
+                '無法取得位置：': 'Impossible d’obtenir la position : ',
+                '僅顯示前 ': 'Affichage des premiers ',
+                ' 筆，請輸入關鍵字縮小範圍': ', affinez avec des mots-clés',
+                '月齡: ': 'Âge de la Lune : ',
+                '地形詳細程度 ': 'Niveau de détail du relief ',
+                '地形起伏 ': 'Amplitude du relief ',
+                '圖片大小 ': 'Taille de l’image ',
+                '旋轉 ': 'Rotation ',
+                '透明度 ': 'Opacité ',
+                '視野旋轉 ': 'Rotation du champ ',
+                '放大縮小 ': 'Zoom ',
+                '/30': '/30',
+                '×': '×',
+                '°': '°',
+            },
+            de: {
+                '正在載入月球資料...': 'Mondaten werden geladen…',
+                '連接伺服器…': 'Verbindung zu Servern wird hergestellt…',
+                '月球觀測儀': 'Mondbeobachter',
+                '照片疊圖': 'Foto-Überlagerung',
+                '今天': 'Heute',
+                '觀測日期與時間': 'Beobachtungsdatum und -zeit',
+                '當前月相': 'Aktuelle Phase',
+                '（手動）': '(manuell)',
+                '朔': 'Neu',
+                '上弦': 'Erstes Viertel',
+                '望': 'Voll',
+                '下弦': 'Letztes Viertel',
+                '月齡': 'Mondalter',
+                '被照明率': 'Beleuchteter Anteil',
+                '視直徑': 'Scheinbarer Durchmesser',
+                '月地距離': 'Erde-Mond-Abstand',
+                '下次新月': 'Nächster Neumond',
+                '緯度天平動(b) / 經度天平動(ℓ)': 'Libration in Breite (b) / in Länge (ℓ)',
+                '位置角P / 視差角q': 'Positionswinkel P / parallaktischer Winkel q',
+                '月出 / 月沒': 'Mondaufgang / -untergang',
+                '上傳照片疊圖': 'Foto zum Überlagern hochladen',
+                '移除疊圖': 'Überlagerung entfernen',
+                '下載目前畫面': 'Aktuelle Ansicht herunterladen',
+                '顯示設定': 'Anzeigeeinstellungen',
+                '語言': 'Sprache',
+                '效能模式': 'Leistungsmodus',
+                '精簡版': 'Leicht',
+                '完整版': 'Vollständig',
+                '地形顯示': 'Geländeausgabe',
+                '名稱': 'Namen',
+                '外框': 'Umrisselinien',
+                '地形名稱': 'Objektnamen',
+                '亮面': 'Beleuchtete Seite',
+                '暗面': 'Dunkle Seite',
+                '翻轉': 'Spiegeln',
+                '左右': 'Horizontal',
+                '上下': 'Vertikal',
+                '月球視野（旋轉 / 翻轉）': 'Mondfeld (drehen / spiegeln)',
+                '自由旋轉月球': 'Mond frei drehen',
+                '中心標記': 'Zentrumsmarke',
+                '回復預設視角（大小與置中）': 'Ansicht zurücksetzen (Größe und Zentrierung)',
+                '顯示月面': 'Oberfläche anzeigen',
+                '經緯網格': 'Selenografisches Gitter',
+                '整顆月球變亮': 'Ganzen Mond aufhellen',
+                '觀測者位置（視差天平動）': 'Beobachterstandort (parallaktische Libration)',
+                '我的位置': 'Mein Standort',
+                '視差修正': 'Parallaxenkorrektur',
+                '顯示方向': 'Ausrichtung',
+                '地平天頂向上（直接觀測方向）': 'Zenit oben (direkte Beobachtung)',
+                '天球北極向上（星圖天球方向）': 'Himmelsnordpol oben (Ausrichtung einer Sternkarte)',
+                '月球北極向上（月面地圖方向）': 'Mondnordpol oben (Ausrichtung einer Mondkarte)',
+                '查詢地形特徵': 'Geländeobjekte suchen',
+                '全部': 'Alle',
+                '類型': 'Typ',
+                '座標': 'Koordinaten',
+                '0.25 天/秒': '0,25 Tage/s',
+                '1 天/秒': '1 Tag/s',
+                '3 天/秒': '3 Tage/s',
+                '7 天/秒': '7 Tage/s',
+                '資料來源': 'Quellen',
+                '資料來源與版權': 'Quellen und Lizenz',
+                '月面影像與地形': 'Mondbilder und Gelände',
+                '影像代理服務': 'Bild-Proxy-Dienst',
+                '程式庫與字型': 'Bibliotheken und Schriften',
+                '天文資料': 'Astronomische Daten',
+                'NASA LROC WAC 月面彩色馬賽克（SVS #4720）· 公眾領域': 'NASA-LROC-WAC-Mondfarbmosaik (SVS #4720) · gemeinfrei',
+                'NASA LOLA 數值地形模型（SVS #4720）· 公眾領域': 'NASA-LOLA-Höhenmodell (SVS #4720) · gemeinfrei',
+                'Solar System Scope 8K 月球紋理（LROC WAC 馬賽克）· CC BY 4.0': 'Solar System Scope 8K-Mondtextur (LROC-WAC-Mosaik) · CC BY 4.0',
+                'Three.js 範例備援紋理（moon_1024.jpg）· MIT': 'Three.js-Beispiel-Backup-Textur (moon_1024.jpg) · MIT',
+                '本機 Stellarium 紋理（textures\\ 資料夾）· 源自 NASA LROC／LOLA 公眾領域影像': 'Lokale Stellarium-Texturen (Ordner textures\\) · abgeleitet von gemeinfreien NASA-LROC/LOLA-Bildern',
+                'images.weserv.nl 免費圖片縮放／快取服務（BSD 3-Clause）': 'Kostenloser Bildskalierungs- und Cache-Dienst images.weserv.nl (BSD 3-Clause)',
+                'Three.js（3D 渲染）· MIT': 'Three.js (3D-Rendering) · MIT',
+                'OrbitControls（Three.js 官方控制器）· MIT': 'OrbitControls (offizielle Three.js-Steuerung) · MIT',
+                'Tailwind CSS（樣式）· MIT': 'Tailwind CSS (Stile) · MIT',
+                'Font Awesome Free 6.4（圖示）· 圖示 CC BY 4.0／字型 SIL OFL 1.1／程式碼 MIT': 'Font Awesome Free 6.4 (Symbole) · Symbole CC BY 4.0 / Schrift SIL OFL 1.1 / Code MIT',
+                'Inter 字型（Google Fonts）· SIL OFL 1.1': 'Schrift Inter (Google Fonts) · SIL OFL 1.1',
+                '月相與天平動公式：J. Meeus《Astronomical Algorithms》': 'Mondphasen und Librationen: J. Meeus, Astronomical Algorithms',
+                'IAU 2003 月球極點模型（Seidelmann, 2003）': 'IAU-2003-Mondpoldatenmodell (Seidelmann, 2003)',
+                '天平動多項式參照 Stellarium 26.2 實作': 'Librationspolynome angelehnt an die Implementierung in Stellarium 26.2',
+                '地形特徵名稱與座標：IAU 行星命名總表（USGS Astrogeology）· 公眾領域': 'Objektnamen und Koordinaten: IAU Gazetteer of Planetary Nomenclature (USGS Astrogeology) · gemeinfrei',
+                'NASA 素材依 NASA 媒體使用準則以事實陳述方式使用，不構成 NASA 背書。本網頁不收集或上傳任何個人資料。': 'NASA-Material wird gemäß den NASA-Medienrichtlinien rein faktisch verwendet und stellt keine NASA-Empfehlung dar. Diese Seite erhebt oder überträgt keine personenbezogenen Daten.',
+                '收起 / 展開': 'Einklappen / ausklappen',
+                '日期倒轉': 'Datum zurück',
+                '暫停': 'Pause',
+                '日期前進': 'Datum vor',
+                '關閉': 'Schließen',
+                '顯示畫面中心標記': 'Mittelpunktmarke der Ansicht anzeigen',
+                '緯度 N+': 'Breite N+',
+                '經度 E+': 'Länge E+',
+                '輸入名稱或關鍵字… (中/英)': 'Namen oder Stichwort eingeben…',
+                '視野旋轉角：純影像旋轉（直接使用此參數），不改變月球相對地球的姿態，所以位置角 P、天平動等真實資料不受影響。': 'Feldrotationswinkel: eine reine Bildrotation (dieser Parameter wird direkt verwendet). Sie verändert die Lage des Mondes zur Erde nicht, daher bleiben echte Daten wie Positionswinkel P und Libration unbeeinflusst.',
+                '月面 selenographic 經緯線：緯度圈與經度輻射線，跟隨月體一起旋轉（受觀測者視差與平衡動影響）': 'Selenografisches Gitter auf der Mondoberfläche: Breitenkreise und Längenstrahlen, die mit dem Mond mitdrehen (beeinflusst von Parallaxe und Libration des Beobachters).',
+                '效能模式：精簡版使用輕量正面月球（無立體地形、無照片疊圖、無自由視角）；完整版保留完整 3D 功能。切換後重新整理立即生效。': 'Leistungsmodus: Leicht verwendet einen leichten Mond in Frontalansicht (kein 3D-Gelände, keine Foto-Überlagerung, keine freie Ansicht); Vollständig behält alle 3D-Funktionen. Die Änderung wird nach dem Neuladen der Seite wirksam.',
+                '資料來源版權': 'Quellen und Lizenz',
+                '朔月（新月）': 'Neumond',
+                '眉月（娥眉月）': 'Zunehmende Sichel',
+                '上弦月': 'Erstes Viertel',
+                '盈凸月': 'Zunehmender Mond',
+                '滿月（望）': 'Vollmond',
+                '虧凸月': 'Abnehmender Mond',
+                '下弦月': 'Letztes Viertel',
+                '殘月': 'Abnehmende Sichel',
+                ' 天': ' Tage',
+                ' 天後': ' Tage',
+                '月面影像': 'Mondbilder',
+                '地形資料': 'Geländedaten',
+                '下載中 月面影像與地形資料⋯': 'Mondbilder und Geländedaten werden heruntergeladen…',
+                '下載中 ': 'Lade ',
+                '⋯': '…',
+                '完成': 'Fertig',
+                '自動判定：': 'auto: ',
+                '臺中市立惠文高中地球科學教師吳秉勳製作': 'Erstellt von Bing-Syun Wu, Lehrer für Erdwissenschaften an der Hui-Wen Senior High School in Taichung',
+                '3D 場景尚未就緒': 'Die 3D-Szene ist noch nicht bereit',
+                '此瀏覽器不支援定位功能': 'Dieser Browser unterstützt keine Standortermittlung',
+                '無法取得位置：': 'Standort konnte nicht ermittelt werden: ',
+                '僅顯示前 ': 'Nur die ersten ',
+                ' 筆，請輸入關鍵字縮小範圍': ' werden angezeigt; mit Stichwörtern eingrenzen',
+                '月齡: ': 'Mondalter: ',
+                '地形詳細程度 ': 'Geländedetailgrad ',
+                '地形起伏 ': 'Geländerelief ',
+                '圖片大小 ': 'Bildgröße ',
+                '旋轉 ': 'Drehung ',
+                '透明度 ': 'Deckkraft ',
+                '視野旋轉 ': 'Felddrehung ',
+                '放大縮小 ': 'Zoom ',
+                '/30': '/30',
+                '×': '×',
+                '°': '°',
+            },
+            cs: {
+                '正在載入月球資料...': 'Načítání měsíčních dat…',
+                '連接伺服器…': 'Připojování k serverům…',
+                '月球觀測儀': 'Měsíční pozorovatel',
+                '照片疊圖': 'Překryv fotografie',
+                '今天': 'Dnes',
+                '觀測日期與時間': 'Datum a čas pozorování',
+                '當前月相': 'Aktuální fáze',
+                '（手動）': '(ručně)',
+                '朔': 'Nov',
+                '上弦': 'První čtvrt',
+                '望': 'Úplněk',
+                '下弦': 'Poslední čtvrt',
+                '月齡': 'Stáří Měsíce',
+                '被照明率': 'Osvětlená část',
+                '視直徑': 'Zdánlivý průměr',
+                '月地距離': 'Vzdálenost Země–Měsíc',
+                '下次新月': 'Další nov',
+                '緯度天平動(b) / 經度天平動(ℓ)': 'Librace v šířce (b) / v délce (ℓ)',
+                '位置角P / 視差角q': 'Úhel polohy P / paralaktický úhel q',
+                '月出 / 月沒': 'Východ / západ Měsíce',
+                '上傳照片疊圖': 'Nahrát fotografii k překryvu',
+                '移除疊圖': 'Odstranit překryv',
+                '下載目前畫面': 'Stáhnout aktuální pohled',
+                '顯示設定': 'Nastavení zobrazení',
+                '語言': 'Jazyk',
+                '效能模式': 'Režim výkonu',
+                '精簡版': 'Odlehčený',
+                '完整版': 'Plný',
+                '地形顯示': 'Zobrazení terénu',
+                '名稱': 'Názvy',
+                '外框': 'Obrysy',
+                '地形名稱': 'Názvy útvarů',
+                '亮面': 'Osvětlená strana',
+                '暗面': 'Temná strana',
+                '翻轉': 'Převrátit',
+                '左右': 'Vodorovně',
+                '上下': 'Svisle',
+                '月球視野（旋轉 / 翻轉）': 'Měsíční pole (otočit / převrátit)',
+                '自由旋轉月球': 'Volně otáčet Měsícem',
+                '中心標記': 'Středová značka',
+                '回復預設視角（大小與置中）': 'Obnovit výchozí pohled (velikost a vycentrování)',
+                '顯示月面': 'Zobrazit povrch',
+                '經緯網格': 'Selenografická síť',
+                '整顆月球變亮': 'Zesvětlit celý Měsíc',
+                '觀測者位置（視差天平動）': 'Poloha pozorovatele (paralaktická librace)',
+                '我的位置': 'Moje poloha',
+                '視差修正': 'Korekce paralaxy',
+                '顯示方向': 'Orientace',
+                '地平天頂向上（直接觀測方向）': 'Zenit nahoře (přímé pozorování)',
+                '天球北極向上（星圖天球方向）': 'Severní nebeský pól nahoře (orientace hvězdné mapy)',
+                '月球北極向上（月面地圖方向）': 'Severní pól Měsíce nahoře (orientace mapy Měsíce)',
+                '查詢地形特徵': 'Hledat útvary',
+                '全部': 'Vše',
+                '類型': 'Typ',
+                '座標': 'Souřadnice',
+                '0.25 天/秒': '0,25 dne/s',
+                '1 天/秒': '1 den/s',
+                '3 天/秒': '3 dny/s',
+                '7 天/秒': '7 dní/s',
+                '資料來源': 'Zdroje',
+                '資料來源與版權': 'Zdroje a licence',
+                '月面影像與地形': 'Měsíční snímky a terén',
+                '影像代理服務': 'Proxy služba pro obrázky',
+                '程式庫與字型': 'Knihovny a písma',
+                '天文資料': 'Astronomická data',
+                'NASA LROC WAC 月面彩色馬賽克（SVS #4720）· 公眾領域': 'Barevná mozaika povrchu Měsíce NASA LROC WAC (SVS #4720) · veřejná doména',
+                'NASA LOLA 數值地形模型（SVS #4720）· 公眾領域': 'Číselný model výšek NASA LOLA (SVS #4720) · veřejná doména',
+                'Solar System Scope 8K 月球紋理（LROC WAC 馬賽克）· CC BY 4.0': '8K textura Měsíce od Solar System Scope (mozaika LROC WAC) · CC BY 4.0',
+                'Three.js 範例備援紋理（moon_1024.jpg）· MIT': 'Záložní textura z příkladu Three.js (moon_1024.jpg) · MIT',
+                '本機 Stellarium 紋理（textures\\ 資料夾）· 源自 NASA LROC／LOLA 公眾領域影像': 'Místní textury Stellarium (složka textures\\) · odvozeno z veřejných snímků NASA LROC/LOLA',
+                'images.weserv.nl 免費圖片縮放／快取服務（BSD 3-Clause）': 'Bezplatná služba pro zmenšování a mezipaměť obrázků images.weserv.nl (BSD 3-Clause)',
+                'Three.js（3D 渲染）· MIT': 'Three.js (3D vykreslování) · MIT',
+                'OrbitControls（Three.js 官方控制器）· MIT': 'OrbitControls (oficiální ovladač Three.js) · MIT',
+                'Tailwind CSS（樣式）· MIT': 'Tailwind CSS (styly) · MIT',
+                'Font Awesome Free 6.4（圖示）· 圖示 CC BY 4.0／字型 SIL OFL 1.1／程式碼 MIT': 'Font Awesome Free 6.4 (ikony) · ikony CC BY 4.0 / písmo SIL OFL 1.1 / kód MIT',
+                'Inter 字型（Google Fonts）· SIL OFL 1.1': 'Písmo Inter (Google Fonts) · SIL OFL 1.1',
+                '月相與天平動公式：J. Meeus《Astronomical Algorithms》': 'Fáze Měsíce a librace: J. Meeus, Astronomical Algorithms',
+                'IAU 2003 月球極點模型（Seidelmann, 2003）': 'Model pólů Měsíce IAU 2003 (Seidelmann, 2003)',
+                '天平動多項式參照 Stellarium 26.2 實作': 'Polynomy librace podle implementace ve Stellarium 26.2',
+                '地形特徵名稱與座標：IAU 行星命名總表（USGS Astrogeology）· 公眾領域': 'Názvy a souřadnice útvarů: IAU Gazetteer of Planetary Nomenclature (USGS Astrogeology) · veřejná doména',
+                'NASA 素材依 NASA 媒體使用準則以事實陳述方式使用，不構成 NASA 背書。本網頁不收集或上傳任何個人資料。': 'Materiály NASA jsou použity věcně podle pokynů pro použití médií NASA a nepředstavují doporučení NASA. Tyto stránky neshromažďují ani neodesílají žádné osobní údaje.',
+                '收起 / 展開': 'Sbalit / rozbalit',
+                '日期倒轉': 'Datum zpět',
+                '暫停': 'Pozastavit',
+                '日期前進': 'Datum vpřed',
+                '關閉': 'Zavřít',
+                '顯示畫面中心標記': 'Zobrazit značku středu zorného pole',
+                '緯度 N+': 'Zeměpisná šířka N+',
+                '經度 E+': 'Zeměpisná délka E+',
+                '輸入名稱或關鍵字… (中/英)': 'Zadejte název nebo klíčové slovo…',
+                '視野旋轉角：純影像旋轉（直接使用此參數），不改變月球相對地球的姿態，所以位置角 P、天平動等真實資料不受影響。': 'Úhel rotace zorného pole: čistá rotace obrázku (parametr se používá přímo). Nemení postavení Měsíce vůči Zemi, takže skutečné údaje jako úhel polohy P a librace zůstávají neovlivněny.',
+                '月面 selenographic 經緯線：緯度圈與經度輻射線，跟隨月體一起旋轉（受觀測者視差與平衡動影響）': 'Selenografická síť na povrchu Měsíce: rovnoběžky a poledníkové paprsky, které se otáčejí spolu s Měsícem (ovlivněny paralaxou a librací pozorovatele).',
+                '效能模式：精簡版使用輕量正面月球（無立體地形、無照片疊圖、無自由視角）；完整版保留完整 3D 功能。切換後重新整理立即生效。': 'Režim výkonu: Odlehčený používá odlehčený Měsíc zepředu (bez 3D reliéfu, bez překryvu fotografií, bez volného pohledu); Plný zachovává všechny 3D funkce. Změna se projeví po znovunačtení stránky.',
+                '資料來源版權': 'Zdroje a licence',
+                '朔月（新月）': 'Nov',
+                '眉月（娥眉月）': 'Rostoucí srpek',
+                '上弦月': 'První čtvrt',
+                '盈凸月': 'Měsíc před úplňkem',
+                '滿月（望）': 'Úplněk',
+                '虧凸月': 'Měsíc po úplňku',
+                '下弦月': 'Poslední čtvrt',
+                '殘月': 'Ustupující srpek',
+                ' 天': ' dní',
+                ' 天後': ' dní',
+                '月面影像': 'snímky povrchu',
+                '地形資料': 'údaje o terénu',
+                '下載中 月面影像與地形資料⋯': 'Načítání snímků povrchu a údajů o terénu…',
+                '下載中 ': 'Načítání ',
+                '⋯': '…',
+                '完成': 'Hotovo',
+                '自動判定：': 'auto: ',
+                '臺中市立惠文高中地球科學教師吳秉勳製作': 'Vytvořil Bing-Syun Wu, učitel věd o Zemi na Hui-Wen Senior High School v Tchaj-čungu',
+                '3D 場景尚未就緒': '3D scéna ještě není připravena',
+                '此瀏覽器不支援定位功能': 'Tento prohlížeč nepodporuje určování polohy',
+                '無法取得位置：': 'Polohu se nepodařilo získat: ',
+                '僅顯示前 ': 'Zobrazeno prvních ',
+                ' 筆，請輸入關鍵字縮小範圍': ' záznamů, zúžete hledání klíčovým slovem',
+                '月齡: ': 'Stáří Měsíce: ',
+                '地形詳細程度 ': 'Úroveň detailu terénu ',
+                '地形起伏 ': 'Převýšení reliéfu ',
+                '圖片大小 ': 'Velikost obrázku ',
+                '旋轉 ': 'Otočení ',
+                '透明度 ': 'Neprůhlednost ',
+                '視野旋轉 ': 'Rotace zorného pole ',
+                '放大縮小 ': 'Přiblížení ',
+                '/30': '/30',
+                '×': '×',
+                '°': '°',
+            },
+            pl: {
+                '正在載入月球資料...': 'Ładowanie danych księżycowych…',
+                '連接伺服器…': 'Łączenie z serwerami…',
+                '月球觀測儀': 'Obserwator Księżyca',
+                '照片疊圖': 'Nakładka zdjęcia',
+                '今天': 'Dzisiaj',
+                '觀測日期與時間': 'Data i godzina obserwacji',
+                '當前月相': 'Bieżąca faza',
+                '（手動）': '(ręcznie)',
+                '朔': 'Nowy',
+                '上弦': 'I kwadra',
+                '望': 'Pełnia',
+                '下弦': 'III kwadra',
+                '月齡': 'Wiek Księżyca',
+                '被照明率': 'Oświetlona część',
+                '視直徑': 'Średnica kątowa',
+                '月地距離': 'Odległość Ziemia–Księżyc',
+                '下次新月': 'Następny nowy Księżyc',
+                '緯度天平動(b) / 經度天平動(ℓ)': 'Libracja w szerokości (b) / w długości (ℓ)',
+                '位置角P / 視差角q': 'Kąt położenia P / kąt paralaktyczny q',
+                '月出 / 月沒': 'Wschód / zachód Księżyca',
+                '上傳照片疊圖': 'Prześlij zdjęcie do nałożenia',
+                '移除疊圖': 'Usuń nakładkę',
+                '下載目前畫面': 'Pobierz bieżący widok',
+                '顯示設定': 'Ustawienia wyświetlania',
+                '語言': 'Język',
+                '效能模式': 'Tryb wydajności',
+                '精簡版': 'Lekki',
+                '完整版': 'Pełny',
+                '地形顯示': 'Wyświetlanie terenu',
+                '名稱': 'Nazwy',
+                '外框': 'Obrysy',
+                '地形名稱': 'Nazwy formacji',
+                '亮面': 'Strona oświetlona',
+                '暗面': 'Strona ciemna',
+                '翻轉': 'Odwróć',
+                '左右': 'Poziomo',
+                '上下': 'Pionowo',
+                '月球視野（旋轉 / 翻轉）': 'Pole Księżyca (obróć / odwróć)',
+                '自由旋轉月球': 'Swobodne obracanie Księżyca',
+                '中心標記': 'Znacznik środka',
+                '回復預設視角（大小與置中）': 'Przywróć domyślny widok (rozmiar i centrowanie)',
+                '顯示月面': 'Wyświetl powierzchnię',
+                '經緯網格': 'Siatka selenograficzna',
+                '整顆月球變亮': 'Rozjaśnij cały Księżyc',
+                '觀測者位置（視差天平動）': 'Lokalizacja obserwatora (libracja paralaktyczna)',
+                '我的位置': 'Moja lokalizacja',
+                '視差修正': 'Korekta paralaksy',
+                '顯示方向': 'Orientacja',
+                '地平天頂向上（直接觀測方向）': 'Zenit u góry (obserwacja bezpośrednia)',
+                '天球北極向上（星圖天球方向）': 'Biegun nieba u góry (orientacja mapy nieba)',
+                '月球北極向上（月面地圖方向）': 'Biegun Księżyca u góry (orientacja mapy Księżyca)',
+                '查詢地形特徵': 'Szukaj formacji',
+                '全部': 'Wszystkie',
+                '類型': 'Typ',
+                '座標': 'Współrzędne',
+                '0.25 天/秒': '0,25 dnia/s',
+                '1 天/秒': '1 dzień/s',
+                '3 天/秒': '3 dni/s',
+                '7 天/秒': '7 dni/s',
+                '資料來源': 'Źródła',
+                '資料來源與版權': 'Źródła i licencja',
+                '月面影像與地形': 'Obrazy i teren Księżyca',
+                '影像代理服務': 'Usługa proxy obrazów',
+                '程式庫與字型': 'Biblioteki i kroje pisma',
+                '天文資料': 'Dane astronomiczne',
+                'NASA LROC WAC 月面彩色馬賽克（SVS #4720）· 公眾領域': 'Kolorowa mozaika powierzchni Księżyca NASA LROC WAC (SVS #4720) · domena publiczna',
+                'NASA LOLA 數值地形模型（SVS #4720）· 公眾領域': 'Cyfrowy model wysokości NASA LOLA (SVS #4720) · domena publiczna',
+                'Solar System Scope 8K 月球紋理（LROC WAC 馬賽克）· CC BY 4.0': 'Tekstura Księżyca 8K od Solar System Scope (mozaika LROC WAC) · CC BY 4.0',
+                'Three.js 範例備援紋理（moon_1024.jpg）· MIT': 'Tekstura zapasowa z przykładu Three.js (moon_1024.jpg) · MIT',
+                '本機 Stellarium 紋理（textures\\ 資料夾）· 源自 NASA LROC／LOLA 公眾領域影像': 'Lokalne tekstury Stellarium (folder textures\\) · opracowane na podstawie zdjęć z domeny publicznej NASA LROC/LOLA',
+                'images.weserv.nl 免費圖片縮放／快取服務（BSD 3-Clause）': 'Bezpłatna usługa skalowania i pamięci podręcznej obrazów images.weserv.nl (BSD 3-Clause)',
+                'Three.js（3D 渲染）· MIT': 'Three.js (renderowanie 3D) · MIT',
+                'OrbitControls（Three.js 官方控制器）· MIT': 'OrbitControls (oficjalny kontroler Three.js) · MIT',
+                'Tailwind CSS（樣式）· MIT': 'Tailwind CSS (style) · MIT',
+                'Font Awesome Free 6.4（圖示）· 圖示 CC BY 4.0／字型 SIL OFL 1.1／程式碼 MIT': 'Font Awesome Free 6.4 (ikony) · ikony CC BY 4.0 / krój SIL OFL 1.1 / kod MIT',
+                'Inter 字型（Google Fonts）· SIL OFL 1.1': 'Krój pisma Inter (Google Fonts) · SIL OFL 1.1',
+                '月相與天平動公式：J. Meeus《Astronomical Algorithms》': 'Fazy Księżyca i libracje: J. Meeus, Astronomical Algorithms',
+                'IAU 2003 月球極點模型（Seidelmann, 2003）': 'Model biegunów Księżyca IAU 2003 (Seidelmann, 2003)',
+                '天平動多項式參照 Stellarium 26.2 實作': 'Wielomiany libracji według implementacji ze Stellarium 26.2',
+                '地形特徵名稱與座標：IAU 行星命名總表（USGS Astrogeology）· 公眾領域': 'Nazwy i współrzędne formacji: IAU Gazetteer of Planetary Nomenclature (USGS Astrogeology) · domena publiczna',
+                'NASA 素材依 NASA 媒體使用準則以事實陳述方式使用，不構成 NASA 背書。本網頁不收集或上傳任何個人資料。': 'Materiały NASA są używane rzeczowo zgodnie z wytycznymi dotyczącymi korzystania z mediów NASA i nie stanowią poparcia NASA. Ta strona nie zbiera ani nie przesyła żadnych danych osobowych.',
+                '收起 / 展開': 'Zwiń / rozwiń',
+                '日期倒轉': 'Cofnij datę',
+                '暫停': 'Pauza',
+                '日期前進': 'Przesuń datę do przodu',
+                '關閉': 'Zamknij',
+                '顯示畫面中心標記': 'Pokaż znacznik środka pola widzenia',
+                '緯度 N+': 'Szerokość N+',
+                '經度 E+': 'Długość E+',
+                '輸入名稱或關鍵字… (中/英)': 'Wpisz nazwę lub słowo kluczowe…',
+                '視野旋轉角：純影像旋轉（直接使用此參數），不改變月球相對地球的姿態，所以位置角 P、天平動等真實資料不受影響。': 'Kąt obrotu pola widzenia: czysty obrót obrazu (parametr jest używany bezpośrednio). Nie zmienia położenia Księżyca względem Ziemi, więc dane rzeczywiste, takie jak kąt położenia P i libracja, pozostają bez zmian.',
+                '月面 selenographic 經緯線：緯度圈與經度輻射線，跟隨月體一起旋轉（受觀測者視差與平衡動影響）': 'Siatka selenograficzna na powierzchni Księżyca: równoleżniki i południki obracające się wraz z Księżycem (podlegające paralaksie i libracji obserwatora).',
+                '效能模式：精簡版使用輕量正面月球（無立體地形、無照片疊圖、無自由視角）；完整版保留完整 3D 功能。切換後重新整理立即生效。': 'Tryb wydajności: Lekki używa lekkiego Księżyca od frontu (bez terenu 3D, bez nakładki zdjęć, bez swobodnego widoku); Pełny zachowuje wszystkie funkcje 3D. Zmiana obowiązuje po ponownym załadowaniu strony.',
+                '資料來源版權': 'Źródła i licencja',
+                '朔月（新月）': 'Nowy Księżyc',
+                '眉月（娥眉月）': 'Sierp',
+                '上弦月': 'I kwadra',
+                '盈凸月': 'Przed pełnią',
+                '滿月（望）': 'Pełnia',
+                '虧凸月': 'Po pełni',
+                '下弦月': 'III kwadra',
+                '殘月': 'Ustający sierp',
+                ' 天': ' dni',
+                ' 天後': ' dni',
+                '月面影像': 'obrazy powierzchni',
+                '地形資料': 'dane terenu',
+                '下載中 月面影像與地形資料⋯': 'Pobieranie obrazów powierzchni i danych terenu…',
+                '下載中 ': 'Pobieranie ',
+                '⋯': '…',
+                '完成': 'Gotowe',
+                '自動判定：': 'auto: ',
+                '臺中市立惠文高中地球科學教師吳秉勳製作': 'Autor: Bing-Syun Wu, nauczyciel nauk o Ziemi w Hui-Wen Senior High School w Tajczungu',
+                '3D 場景尚未就緒': 'Scena 3D nie jest jeszcze gotowa',
+                '此瀏覽器不支援定位功能': 'Ta przeglądarka nie obsługuje lokalizacji',
+                '無法取得位置：': 'Nie udało się ustalić lokalizacji: ',
+                '僅顯示前 ': 'Wyświetlono pierwsze ',
+                ' 筆，請輸入關鍵字縮小範圍': ' pozycji, zawęź wyszukiwanie słowem kluczowym',
+                '月齡: ': 'Wiek Księżyca: ',
+                '地形詳細程度 ': 'Poziom szczegółowości terenu ',
+                '地形起伏 ': 'Rzeźba terenu ',
+                '圖片大小 ': 'Rozmiar obrazu ',
+                '旋轉 ': 'Obrót ',
+                '透明度 ': 'Krycie ',
+                '視野旋轉 ': 'Obrót pola widzenia ',
+                '放大縮小 ': 'Powiększenie ',
+                '/30': '/30',
+                '×': '×',
+                '°': '°',
+            },
+            it: {
+                '正在載入月球資料...': 'Caricamento dei dati lunari…',
+                '連接伺服器…': 'Connessione ai server…',
+                '月球觀測儀': 'Osservatore Lunare',
+                '照片疊圖': 'Sovrapposizione foto',
+                '今天': 'Oggi',
+                '觀測日期與時間': 'Data e ora di osservazione',
+                '當前月相': 'Fase attuale',
+                '（手動）': '(manuale)',
+                '朔': 'Nuova',
+                '上弦': 'Primo quarto',
+                '望': 'Piena',
+                '下弦': 'Ultimo quarto',
+                '月齡': 'Età della Luna',
+                '被照明率': 'Frazione illuminata',
+                '視直徑': 'Diametro apparente',
+                '月地距離': 'Distanza Terra–Luna',
+                '下次新月': 'Prossima luna nuova',
+                '緯度天平動(b) / 經度天平動(ℓ)': 'Librazione in latitudine (b) / in longitudine (ℓ)',
+                '位置角P / 視差角q': 'Angolo di posizione P / angolo parallattico q',
+                '月出 / 月沒': 'Alba / tramonto della Luna',
+                '上傳照片疊圖': 'Carica una foto da sovrapporre',
+                '移除疊圖': 'Rimuovi sovrapposizione',
+                '下載目前畫面': 'Scarica la schermata attuale',
+                '顯示設定': 'Impostazioni di visualizzazione',
+                '語言': 'Lingua',
+                '效能模式': 'Modalità prestazioni',
+                '精簡版': 'Leggera',
+                '完整版': 'Completa',
+                '地形顯示': 'Visualizzazione del terreno',
+                '名稱': 'Nomi',
+                '外框': 'Contorni',
+                '地形名稱': 'Nomi dei rilievi',
+                '亮面': 'Lato illuminato',
+                '暗面': 'Lato scuro',
+                '翻轉': 'Ribalta',
+                '左右': 'Orizzontale',
+                '上下': 'Verticale',
+                '月球視野（旋轉 / 翻轉）': 'Campo lunare (ruota / ribalta)',
+                '自由旋轉月球': 'Ruota liberamente la Luna',
+                '中心標記': 'Segno centrale',
+                '回復預設視角（大小與置中）': 'Ripristina la vista (dimensioni e centratura)',
+                '顯示月面': 'Mostra la superficie',
+                '經緯網格': 'Graticolo selenografico',
+                '整顆月球變亮': 'Illumina tutta la Luna',
+                '觀測者位置（視差天平動）': 'Posizione dell’osservatore (librazione parallattica)',
+                '我的位置': 'La mia posizione',
+                '視差修正': 'Correzione di parallasse',
+                '顯示方向': 'Orientamento',
+                '地平天頂向上（直接觀測方向）': 'Zenit in alto (osservazione diretta)',
+                '天球北極向上（星圖天球方向）': 'Polo celeste in alto (orientamento della carta stellare)',
+                '月球北極向上（月面地圖方向）': 'Polo lunare in alto (orientamento della mappa lunare)',
+                '查詢地形特徵': 'Cerca rilievi',
+                '全部': 'Tutti',
+                '類型': 'Tipo',
+                '座標': 'Coordinate',
+                '0.25 天/秒': '0,25 giorno/s',
+                '1 天/秒': '1 giorno/s',
+                '3 天/秒': '3 giorni/s',
+                '7 天/秒': '7 giorni/s',
+                '資料來源': 'Fonti',
+                '資料來源與版權': 'Fonti e licenza',
+                '月面影像與地形': 'Immagini e terreno lunare',
+                '影像代理服務': 'Servizio proxy immagini',
+                '程式庫與字型': 'Librerie e caratteri',
+                '天文資料': 'Dati astronomici',
+                'NASA LROC WAC 月面彩色馬賽克（SVS #4720）· 公眾領域': 'Mosaico a colori della superficie lunare NASA LROC WAC (SVS #4720) · pubblico dominio',
+                'NASA LOLA 數值地形模型（SVS #4720）· 公眾領域': 'Modello digitale di elevazione NASA LOLA (SVS #4720) · pubblico dominio',
+                'Solar System Scope 8K 月球紋理（LROC WAC 馬賽克）· CC BY 4.0': 'Texture lunare 8K di Solar System Scope (mosaico LROC WAC) · CC BY 4.0',
+                'Three.js 範例備援紋理（moon_1024.jpg）· MIT': 'Texture di riserva dell’esempio Three.js (moon_1024.jpg) · MIT',
+                '本機 Stellarium 紋理（textures\\ 資料夾）· 源自 NASA LROC／LOLA 公眾領域影像': 'Texture Stellarium locali (cartella textures\\) · derivate da immagini nel pubblico dominio NASA LROC/LOLA',
+                'images.weserv.nl 免費圖片縮放／快取服務（BSD 3-Clause）': 'Servizio gratuito di ridimensionamento e cache delle immagini images.weserv.nl (BSD 3-Clause)',
+                'Three.js（3D 渲染）· MIT': 'Three.js (rendering 3D) · MIT',
+                'OrbitControls（Three.js 官方控制器）· MIT': 'OrbitControls (controllo ufficiale di Three.js) · MIT',
+                'Tailwind CSS（樣式）· MIT': 'Tailwind CSS (stili) · MIT',
+                'Font Awesome Free 6.4（圖示）· 圖示 CC BY 4.0／字型 SIL OFL 1.1／程式碼 MIT': 'Font Awesome Free 6.4 (icone) · icone CC BY 4.0 / carattere SIL OFL 1.1 / codice MIT',
+                'Inter 字型（Google Fonts）· SIL OFL 1.1': 'Carattere Inter (Google Fonts) · SIL OFL 1.1',
+                '月相與天平動公式：J. Meeus《Astronomical Algorithms》': 'Fasi lunari e librazioni: J. Meeus, Astronomical Algorithms',
+                'IAU 2003 月球極點模型（Seidelmann, 2003）': 'Modello dei poli lunari IAU 2003 (Seidelmann, 2003)',
+                '天平動多項式參照 Stellarium 26.2 實作': 'Polinomi di librazione ispirati all’implementazione di Stellarium 26.2',
+                '地形特徵名稱與座標：IAU 行星命名總表（USGS Astrogeology）· 公眾領域': 'Nomi e coordinate dei rilievi: Gazetteer of Planetary Nomenclature dell’IAU (USGS Astrogeology) · pubblico dominio',
+                'NASA 素材依 NASA 媒體使用準則以事實陳述方式使用，不構成 NASA 背書。本網頁不收集或上傳任何個人資料。': 'Il materiale NASA è usato in modo fattuale secondo le linee guida NASA sull’uso dei media e non costituisce un endoso NASA. Questa pagina non raccoglie né trasmette dati personali.',
+                '收起 / 展開': 'Comprimi / espandi',
+                '日期倒轉': 'Data indietro',
+                '暫停': 'Pausa',
+                '日期前進': 'Data avanti',
+                '關閉': 'Chiudi',
+                '顯示畫面中心標記': 'Mostra il segno al centro del campo visivo',
+                '緯度 N+': 'Latitudine N+',
+                '經度 E+': 'Longitudine E+',
+                '輸入名稱或關鍵字… (中/英)': 'Digita un nome o una parola chiave…',
+                '視野旋轉角：純影像旋轉（直接使用此參數），不改變月球相對地球的姿態，所以位置角 P、天平動等真實資料不受影響。': 'Angolo di rotazione del campo: una pura rotazione dell’immagine (questo parametro è usato direttamente). Non cambia l’atteggiamento della Luna rispetto alla Terra, quindi dati reali come l’angolo di posizione P e la librazione restano invariati.',
+                '月面 selenographic 經緯線：緯度圈與經度輻射線，跟隨月體一起旋轉（受觀測者視差與平衡動影響）': 'Graticolo selenografico sulla superficie lunare: circoli di latitudine e raggi di longitudine che ruotano con la Luna (influenzati dalla parallasse e dalla librazione dell’osservatore).',
+                '效能模式：精簡版使用輕量正面月球（無立體地形、無照片疊圖、無自由視角）；完整版保留完整 3D 功能。切換後重新整理立即生效。': 'Modalità prestazioni: Leggera usa una Luna frontale leggera (senza rilievo 3D, senza sovrapposizione di foto, senza vista libera); Completa conserva tutte le funzioni 3D. La modifica ha effetto dopo il ricaricamento della pagina.',
+                '資料來源版權': 'Fonti e licenza',
+                '朔月（新月）': 'Luna nuova',
+                '眉月（娥眉月）': 'Primo crescente',
+                '上弦月': 'Primo quarto',
+                '盈凸月': 'Quasi piena',
+                '滿月（望）': 'Luna piena',
+                '虧凸月': 'Quasi vuota',
+                '下弦月': 'Ultimo quarto',
+                '殘月': 'Ultimo crescente',
+                ' 天': ' giorni',
+                ' 天後': ' giorni',
+                '月面影像': 'immagini della superficie',
+                '地形資料': 'dati sul terreno',
+                '下載中 月面影像與地形資料⋯': 'Scaricamento delle immagini della superficie e dei dati sul terreno…',
+                '下載中 ': 'Scaricamento di ',
+                '⋯': '…',
+                '完成': 'Fatto',
+                '自動判定：': 'auto: ',
+                '臺中市立惠文高中地球科學教師吳秉勳製作': 'Creato da Bing-Syun Wu, docente di Scienze della Terra alla Hui-Wen Senior High School di Taichung',
+                '3D 場景尚未就緒': 'La scena 3D non è ancora pronta',
+                '此瀏覽器不支援定位功能': 'Questo browser non supporta la geolocalizzazione',
+                '無法取得位置：': 'Impossibile ottenere la posizione: ',
+                '僅顯示前 ': 'Mostrati solo i primi ',
+                ' 筆，請輸入關鍵字縮小範圍': ', raffina con parole chiave',
+                '月齡: ': 'Età della Luna: ',
+                '地形詳細程度 ': 'Livello di dettaglio del terreno ',
+                '地形起伏 ': 'Rilievo del terreno ',
+                '圖片大小 ': 'Dimensione dell’immagine ',
+                '旋轉 ': 'Rotazione ',
+                '透明度 ': 'Opacità ',
+                '視野旋轉 ': 'Rotazione del campo ',
+                '放大縮小 ': 'Zoom ',
+                '/30': '/30',
+                '×': '×',
+                '°': '°',
+            }
         };
 
         // Translations are recorded per text node and per element attribute, keyed
         // by node identity. Looking the text up again on the way back would fail,
         // because by then the node already holds the English wording, which is not
         // a key in the tables — so the restore has to go through the record.
-        const i18nTextNodes = new Map();   // text node -> { tw, en }
-        const i18nAttrs = new Map();       // element   -> { attr: { tw, en } }
+        const i18nTextNodes = new Map();   // text node -> { tw, key, en }
+        const i18nAttrs = new Map();       // element   -> { attr: { tw, key, en } }
+
+        // Resolve one record for the current language: 繁中 uses the markup text
+        // verbatim, English uses I18N_TEXT/I18N_ATTR, everything else looks up
+        // L10N[lang][key] and falls back to the English wording.
+        function i18nValue(rec) {
+            if (state.lang === 'tw') return rec.tw;
+            const tbl = L10N[state.lang];
+            if (tbl && rec.key !== undefined && tbl[rec.key] !== undefined) return tbl[rec.key];
+            return rec.en !== undefined ? rec.en : rec.tw;
+        }
+
+        // Same lookup for strings that live only in JavaScript (units, phase
+        // names, alerts…): T('繁中', 'English') picks the translation by key.
+        function T(tw, en) {
+            if (state.lang === 'tw') return tw;
+            const tbl = L10N[state.lang];
+            if (tbl && tbl[tw] !== undefined) return tbl[tw];
+            return en;
+        }
 
         function applyI18n() {
-            const en = state.lang === 'en';
             const root = document.body;
             if (!root) return;
 
             // 1) re-apply or restore everything already recorded, by identity
             i18nTextNodes.forEach((rec, node) => {
                 if (!node.parentNode) { i18nTextNodes.delete(node); return; }
-                node.nodeValue = en ? rec.en : rec.tw;
+                node.nodeValue = i18nValue(rec);
             });
             i18nAttrs.forEach((recs, el) => {
                 Object.keys(recs).forEach((attr) => {
-                    el.setAttribute(attr, en ? recs[attr].en : recs[attr].tw);
+                    el.setAttribute(attr, i18nValue(recs[attr]));
                 });
             });
 
@@ -12902,9 +14153,9 @@ const cv = makeProceduralElevationCanvas();
                 if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'TEXTAREA') continue;
                 const key = tn.nodeValue.trim();
                 if (!key || !(key in I18N_TEXT)) continue;
-                const rec = { tw: tn.nodeValue, en: I18N_TEXT[key] };
+                const rec = { tw: tn.nodeValue, key: key, en: I18N_TEXT[key] };
                 i18nTextNodes.set(tn, rec);
-                tn.nodeValue = en ? rec.en : rec.tw;
+                tn.nodeValue = i18nValue(rec);
             }
 
             // 3) tooltips, placeholders and image alt text. A few of these carry the
@@ -12921,8 +14172,8 @@ const cv = makeProceduralElevationCanvas();
                     if (enText === undefined) enText = I18N_TEXT[key];
                     if (enText === undefined) return;
                     if (!recs) { recs = {}; i18nAttrs.set(el, recs); }
-                    recs[attr] = { tw: key, en: enText };
-                    el.setAttribute(attr, en ? recs[attr].en : recs[attr].tw);
+                    recs[attr] = { tw: key, key: key, en: enText };
+                    el.setAttribute(attr, i18nValue(recs[attr]));
                 });
             });
 
@@ -12936,25 +14187,26 @@ const cv = makeProceduralElevationCanvas();
                 const first = nodes[0];
                 if (t.lead !== undefined && first && first.nodeType === 3) {
                     let rec = i18nTextNodes.get(first);
-                    if (!rec) { rec = { tw: first.nodeValue, en: t.lead }; i18nTextNodes.set(first, rec); }
-                    first.nodeValue = en ? rec.en : rec.tw;
+                    if (!rec) { rec = { tw: first.nodeValue, key: first.nodeValue, en: t.lead }; i18nTextNodes.set(first, rec); }
+                    first.nodeValue = i18nValue(rec);
                 }
                 const last = nodes[nodes.length - 1];
                 if (t.trail !== undefined && nodes.length > 1 && last && last.nodeType === 3) {
                     let rec = i18nTextNodes.get(last);
-                    if (!rec) { rec = { tw: last.nodeValue, en: t.trail }; i18nTextNodes.set(last, rec); }
-                    last.nodeValue = en ? rec.en : rec.tw;
+                    if (!rec) { rec = { tw: last.nodeValue, key: last.nodeValue, en: t.trail }; i18nTextNodes.set(last, rec); }
+                    last.nodeValue = i18nValue(rec);
                 }
             });
 
             // 4) document title and meta description
-            const d = I18N_DOC[en ? 'en' : 'tw'];
+            const d = I18N_DOC[state.lang] || I18N_DOC.en;
             document.title = d.title;
             const meta = document.querySelector('meta[name="description"]');
             if (meta) meta.setAttribute('content', d.desc);
         }
 
         function setLang(lang) {
+            if (LOCALES.indexOf(lang) === -1) lang = 'en';
             state.lang = lang;
             applyI18n();
             updateCredit();
@@ -12965,15 +14217,15 @@ const cv = makeProceduralElevationCanvas();
             markDirty();
             updateModeNote();
         }
-        langTwBtn.addEventListener('click', () => setLang('tw'));
-        langEnBtn.addEventListener('click', () => setLang('en'));
+        if (langSelect) langSelect.addEventListener('change', () => setLang(langSelect.value));
 
         // 效能模式：下拉反映目前狀態；沒有手動存檔時附註「自動判定」來源。
         function updateModeNote() {
             if (!modeAutoNote) return;
             let saved = null;
             try { saved = localStorage.getItem('moonterrain.mode'); } catch (e) { /* private mode */ }
-            modeAutoNote.textContent = saved ? '' : (state.lang === 'en' ? 'auto: ' : '自動判定：') + (state.lowPerf ? (state.lang === 'en' ? 'Light' : '精簡版') : (state.lang === 'en' ? 'Full' : '完整版'));
+            modeAutoNote.textContent = saved ? ''
+                : T('自動判定：', 'auto: ') + T(state.lowPerf ? '精簡版' : '完整版', state.lowPerf ? 'Light' : 'Full');
         }
         updateModeNote();
         if (perfModeSel) {
@@ -12981,12 +14233,13 @@ const cv = makeProceduralElevationCanvas();
             perfModeSel.addEventListener('change', (e) => setPerfMode(e.target.value === 'low'));
         }
         applyI18n();
+        // 首次載入：下拉選單預設值是 tw，這裡對齊到自動偵測到的語言。
+        if (langSelect) langSelect.value = state.lang;
         function updateCredit() {
             const el = document.getElementById('credit-text');
             if (!el) return;
-            el.textContent = state.lang === 'en'
-                ? 'Made by Bing-Syun Wu, Earth Science Teacher, Hui-Wen Senior High School'
-                : '臺中市立惠文高中地球科學教師吳秉勳製作';
+            el.textContent = T('臺中市立惠文高中地球科學教師吳秉勳製作',
+                'Made by Bing-Syun Wu, Earth Science Teacher, Hui-Wen Senior High School');
         }
         const creditsModal = document.getElementById('credits-modal');
         const btnCredits = document.getElementById('btn-credits');
@@ -13137,7 +14390,7 @@ const cv = makeProceduralElevationCanvas();
         toggleOverlayFlipV.addEventListener('change', (e) => { state.overlayFlipV = e.target.checked; renderOverlay(); markDirty(); });
         btnDownload.addEventListener('click', () => {
             const sceneOK = typeof renderer !== 'undefined' && typeof scene !== 'undefined' && typeof camera !== 'undefined';
-            if (!sceneOK) { alert(state.lang === 'en' ? '3D scene is not ready yet' : '3D 場景尚未就緒'); return; }
+            if (!sceneOK) { alert(T('3D 場景尚未就緒', '3D scene is not ready yet')); return; }
             // Sharper download: temporarily raise the renderers' pixel ratio (buffer
             // grows, on-screen style is untouched), then restore after compositing.
             // The export is at least 1.5x the base resolution, and is never smaller
@@ -13299,7 +14552,7 @@ const cv = makeProceduralElevationCanvas();
         selUpMode.addEventListener('change', (e) => { state.moonUpMode = e.target.value; updateMoonOrientation(); refreshObservationInfo(); markDirty(); });
 
         btnMyLoc.addEventListener('click', () => {
-            if (!navigator.geolocation) { alert(state.lang === 'tw' ? '此瀏覽器不支援定位功能' : 'Geolocation is not supported'); return; }
+            if (!navigator.geolocation) { alert(T('此瀏覽器不支援定位功能', 'Geolocation is not supported')); return; }
             btnMyLoc.disabled = true;
             navigator.geolocation.getCurrentPosition((pos) => {
                 obsLatInput.value = pos.coords.latitude.toFixed(2);
@@ -13310,7 +14563,7 @@ const cv = makeProceduralElevationCanvas();
                 markDirty();
                 btnMyLoc.disabled = false;
             }, (err) => {
-                alert((state.lang === 'tw' ? '無法取得位置：' : 'Cannot get location: ') + err.message);
+                alert(T('無法取得位置：', 'Cannot get location: ') + err.message);
                 btnMyLoc.disabled = false;
             }, { timeout: 10000 });
         });
