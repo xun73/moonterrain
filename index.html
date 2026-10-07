@@ -12485,9 +12485,11 @@ const cv = makeProceduralElevationCanvas();
             badge.style.background = info.color; badge.style.borderColor = info.color; badge.style.color = '#fff';
             const primary = featureLabel(feature);
             document.getElementById('dc-name-tw').textContent = primary;
-            // 第二行永遠是「另一個名字」：主名是拉丁文就補中文，主名是中文就補拉丁文。
-            document.getElementById('dc-name-en').textContent =
-                primary === feature.en ? feature.tw : feature.en;
+            // 第二行永遠是英文原名（斜體）；主名本身已是英文時不重複顯示。
+            const sub = document.getElementById('dc-name-en');
+            const enName = (feature.en || '');
+            sub.textContent = primary === enName ? '' : enName;
+            sub.classList.toggle('hidden', primary === enName);
             document.getElementById('dc-coord').textContent = fmtCoord(feature.lat, feature.lon);
             document.getElementById('dc-intro').textContent = featureIntroText(feature);
 
@@ -12735,10 +12737,13 @@ const cv = makeProceduralElevationCanvas();
                 main.className = 'block text-[12px] text-gray-100 truncate';
                 const primary = featureLabel(f);
                 main.textContent = primary;
-                const sub = document.createElement('span');
-                sub.className = 'block text-[10px] text-gray-500 truncate';
-                sub.textContent = primary === f.en ? f.tw : f.en;
-                nameCol.appendChild(main); nameCol.appendChild(sub);
+                nameCol.appendChild(main);
+                if (primary !== f.en) {
+                    const sub = document.createElement('span');
+                    sub.className = 'block text-[10px] text-gray-500 truncate';
+                    sub.textContent = f.en;
+                    nameCol.appendChild(sub);
+                }
                 const lv = document.createElement('span');
                 lv.className = 'text-[10px] text-gray-600 flex-shrink-0';
                 lv.textContent = 'D' + f.rank;
